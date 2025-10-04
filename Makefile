@@ -1,0 +1,101 @@
+# Go related variables
+BINARY_NAME := main
+MAIN_PATH := ./cmd/api
+BUILD_DIR := ./build
+TMP_DIR := ./tmp
+
+# Database related variables
+DB_URL := postgres://postgres:postgres@localhost:5432/postgres
+MIGRATION_DIR := ./sql/schema
+
+# Build flags
+LDFLAGS := -s -w
+
+.DEFAULT_GOAL := help
+
+# Help target
+.PHONY: help
+help: ## Show this help message
+	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+
+.PHONY: wire
+wire:
+	cd internal && wire
+
+# Development targets
+.PHONY: dev
+dev: wire ## Start development server with hot reload
+	@air
+
+# Build targets
+.PHONY: build
+build: wire ## Build the application
+	@go build -ldflags="$(LDFLAGS)" -o $(BUILD_DIR)/$(BINARY_NAME) $(MAIN_PATH)
+
+# Database targets
+.PHONY: migrate-up
+migrate-up: ## Run database migrations up
+	@goose -dir $(MIGRATION_DIR) postgres $(DB_URL) up
+
+.PHONY: migrate-down
+migrate-down: ## Run database migrations down
+	@goose -dir $(MIGRATION_DIR) postgres $(DB_URL) down
+
+.PHONY: migrate-status
+migrate-status: ## Show database migration status
+	@goose -dir $(MIGRATION_DIR) postgres $(DB_URL) status
+
+.PHONY: sqlc
+sqlc: ## Generate SQL code
+	@sqlc generate
+
+# Testing targets
+.PHONY: test
+test: ## Run tests
+	@go test -v ./...
+
+.PHONY: test-coverage
+test-coverage: ## Run tests with coverage
+	@go test -v -coverprofile=coverage.out ./...
+	@go tool cover -html=coverage.out -o coverage.html
+
+.PHONY: test-race
+test-race: ## Run tests with race detection
+	@go test -v -race ./...
+
+# Cleaning targets
+.PHONY: clean
+clean: ## Clean build artifacts
+	@rm -rf $(BUILD_DIR) $(TMP_DIR) coverage.out coverage.html
+	@go clean -cache
+
+# Docker targets
+.PHONY: docker-build
+docker-build: ## Build Docker containers
+	@docker compose build
+
+.PHONY: docker-up
+docker-up: ## Start Docker containers
+	@docker compose up -d
+
+.PHONY: docker-down
+docker-down: ## Stop Docker containers
+	@docker compose down
+
+.PHONY: docker-restart
+docker-restart: docker-down docker-up ## Restart Docker containers
+
+.PHONY: docker-clean
+docker-clean: ## Clean Docker containers and images
+	@docker compose down --rmi local
+
+.PHONY: docker
+docker: docker-clean docker-build docker-up ## Clean, build and start Docker development environment
+
+# Install development dependencies
+.PHONY: install-deps
+install-deps: ## Install development dependencies
+	@go install github.com/air-verse/air@latest
+	@go install github.com/pressly/goose/v3/cmd/goose@latest
+	@go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
+	@go install github.com/google/wire/cmd/wire@latest
