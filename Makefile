@@ -18,36 +18,15 @@ LDFLAGS := -s -w
 help: ## Show this help message
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
-.PHONY: wire
-wire:
-	cd internal && wire
-
 # Development targets
 .PHONY: dev
-dev: wire ## Start development server with hot reload
+dev: ## Start development server with hot reload
 	@air
 
 # Build targets
 .PHONY: build
-build: wire ## Build the application
+build: ## Build the application
 	@go build -ldflags="$(LDFLAGS)" -o $(BUILD_DIR)/$(BINARY_NAME) $(MAIN_PATH)
-
-# Database targets
-.PHONY: migrate-up
-migrate-up: ## Run database migrations up
-	@goose -dir $(MIGRATION_DIR) postgres $(DB_URL) up
-
-.PHONY: migrate-down
-migrate-down: ## Run database migrations down
-	@goose -dir $(MIGRATION_DIR) postgres $(DB_URL) down
-
-.PHONY: migrate-status
-migrate-status: ## Show database migration status
-	@goose -dir $(MIGRATION_DIR) postgres $(DB_URL) status
-
-.PHONY: sqlc
-sqlc: ## Generate SQL code
-	@sqlc generate
 
 # Testing targets
 .PHONY: test
@@ -96,6 +75,3 @@ docker: docker-clean docker-build docker-up ## Clean, build and start Docker dev
 .PHONY: install-deps
 install-deps: ## Install development dependencies
 	@go install github.com/air-verse/air@latest
-	@go install github.com/pressly/goose/v3/cmd/goose@latest
-	@go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
-	@go install github.com/google/wire/cmd/wire@latest
