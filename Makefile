@@ -1,12 +1,8 @@
 # Go related variables
 BINARY_NAME := main
-MAIN_PATH := ./cmd/api
+MAIN_PATH := ./cmd/server
 BUILD_DIR := ./build
 TMP_DIR := ./tmp
-
-# Database related variables
-DB_URL := postgres://postgres:postgres@localhost:5432/postgres
-MIGRATION_DIR := ./sql/schema
 
 # Build flags
 LDFLAGS := -s -w
