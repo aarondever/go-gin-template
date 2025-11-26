@@ -14,7 +14,7 @@ type Database struct {
 	*sqlx.DB
 }
 
-func NewPostgreSQL(cfg config.DatabaseConfig) (*Database, error) {
+func NewDatabase(cfg config.DatabaseConfig) (*Database, error) {
 	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
 		cfg.Host,
 		cfg.Port,

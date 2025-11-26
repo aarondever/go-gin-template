@@ -1,6 +1,6 @@
 # Go related variables
 BINARY_NAME := main
-MAIN_PATH := ./cmd/server
+MAIN_PATH := ./cmd/api
 BUILD_DIR := ./build
 TMP_DIR := ./tmp
 

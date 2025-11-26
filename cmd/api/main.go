@@ -12,12 +12,11 @@ import (
 
 	"github.com/aarondever/go-gin-template/internal/config"
 	"github.com/aarondever/go-gin-template/internal/database"
-	"github.com/aarondever/go-gin-template/internal/handler"
-	"github.com/aarondever/go-gin-template/internal/repository"
-	"github.com/aarondever/go-gin-template/internal/router"
-	"github.com/aarondever/go-gin-template/internal/service"
-	"github.com/aarondever/go-gin-template/internal/worker"
+	"github.com/aarondever/go-gin-template/internal/domain/product"
+	"github.com/aarondever/go-gin-template/internal/domain/user"
+	"github.com/aarondever/go-gin-template/internal/middleware"
 	"github.com/aarondever/go-gin-template/pkg/logger"
+	"github.com/gin-gonic/gin"
 )
 
 func main() {
@@ -31,7 +30,7 @@ func main() {
 	logger.Init(cfg.Log.Level, cfg.Log.Format)
 
 	// Initialize database
-	db, err := database.NewPostgreSQL(cfg.Database)
+	db, err := database.NewDatabase(cfg.Database)
 	if err != nil {
 		logger.Fatal("Failed to connect to database", "error", err)
 	}
@@ -39,20 +38,37 @@ func main() {
 
 	logger.Info("Database connected successfully")
 
-	// Initialize worker pool
-	workerPool := worker.NewPool(cfg.Worker.PoolSize, cfg.Worker.QueueSize)
-	workerPool.Start()
-	defer workerPool.Stop()
+	// Initialize repositories
+	userRepo := user.NewRepository(db)
+	productRepo := product.NewRepository(db)
 
-	logger.Info("Worker pool started", "size", cfg.Worker.PoolSize)
+	// Initialize services
+	userService := user.NewService(userRepo)
+	productService := product.NewService(productRepo)
 
-	// Initialize layers
-	userRepo := repository.NewUserRepository(db)
-	userService := service.NewUserService(userRepo, workerPool)
-	userHandler := handler.NewUserHandler(userService)
+	// Initialize handlers
+	userHandler := user.NewHandler(userService)
+	productHandler := product.NewHandler(productService)
 
 	// Setup router
-	r := router.NewRouter(cfg, userHandler)
+	gin.SetMode(gin.ReleaseMode)
+	r := gin.New()
+
+	// Global middleware
+	r.Use(middleware.Logger())
+	r.Use(gin.Recovery())
+
+	// Health check
+	r.GET("/health", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{"status": "ok"})
+	})
+
+	// API v1 routes
+	v1 := r.Group("/api/v1")
+
+	// Register routes
+	userHandler.RegisterRoutes(v1)
+	productHandler.RegisterRoutes(v1)
 
 	// Create HTTP server
 	srv := &http.Server{
