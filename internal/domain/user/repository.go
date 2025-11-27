@@ -8,15 +8,23 @@ import (
 	"github.com/aarondever/go-gin-template/internal/database"
 )
 
-type Repository struct {
+type Repository interface {
+	Create(ctx context.Context, user *User) error
+	GetByID(ctx context.Context, id int64) (*User, error)
+	List(ctx context.Context, limit, offset int) ([]*User, error)
+	Update(ctx context.Context, user *User) error
+	Delete(ctx context.Context, id int64) error
+}
+
+type repository struct {
 	db *database.Database
 }
 
-func NewRepository(db *database.Database) *Repository {
-	return &Repository{db: db}
+func NewRepository(db *database.Database) Repository {
+	return &repository{db: db}
 }
 
-func (r *Repository) Create(ctx context.Context, user *User) error {
+func (r *repository) Create(ctx context.Context, user *User) error {
 	query := `
 		INSERT INTO users (email, name, created_at, updated_at)
 		VALUES ($1, $2, NOW(), NOW())
@@ -26,7 +34,7 @@ func (r *Repository) Create(ctx context.Context, user *User) error {
 		Scan(&user.ID, &user.CreatedAt, &user.UpdatedAt)
 }
 
-func (r *Repository) GetByID(ctx context.Context, id int64) (*User, error) {
+func (r *repository) GetByID(ctx context.Context, id int64) (*User, error) {
 	var user User
 	query := `SELECT id, email, name, created_at, updated_at FROM users WHERE id = $1`
 
@@ -41,7 +49,7 @@ func (r *Repository) GetByID(ctx context.Context, id int64) (*User, error) {
 	return &user, nil
 }
 
-func (r *Repository) List(ctx context.Context, limit, offset int) ([]*User, error) {
+func (r *repository) List(ctx context.Context, limit, offset int) ([]*User, error) {
 	var users []*User
 	query := `SELECT id, email, name, created_at, updated_at FROM users ORDER BY id LIMIT $1 OFFSET $2`
 
@@ -49,7 +57,7 @@ func (r *Repository) List(ctx context.Context, limit, offset int) ([]*User, erro
 	return users, err
 }
 
-func (r *Repository) Update(ctx context.Context, user *User) error {
+func (r *repository) Update(ctx context.Context, user *User) error {
 	query := `
 		UPDATE users 
 		SET email = $1, name = $2, updated_at = NOW()
@@ -60,7 +68,7 @@ func (r *Repository) Update(ctx context.Context, user *User) error {
 		Scan(&user.UpdatedAt)
 }
 
-func (r *Repository) Delete(ctx context.Context, id int64) error {
+func (r *repository) Delete(ctx context.Context, id int64) error {
 	query := `DELETE FROM users WHERE id = $1`
 	_, err := r.db.ExecContext(ctx, query, id)
 	return err

@@ -10,15 +10,23 @@ var (
 	ErrInvalidInput = errors.New("invalid input")
 )
 
-type Service struct {
-	repo *Repository
+type Service interface {
+	Create(ctx context.Context, req *CreateUserRequest) (*User, error)
+	GetByID(ctx context.Context, id int64) (*User, error)
+	List(ctx context.Context, limit, offset int) ([]*User, error)
+	Update(ctx context.Context, id int64, req *UpdateUserRequest) (*User, error)
+	Delete(ctx context.Context, id int64) error
 }
 
-func NewService(repo *Repository) *Service {
-	return &Service{repo: repo}
+type service struct {
+	repo Repository
 }
 
-func (s *Service) Create(ctx context.Context, req *CreateUserRequest) (*User, error) {
+func NewService(repo Repository) Service {
+	return &service{repo: repo}
+}
+
+func (s *service) Create(ctx context.Context, req *CreateUserRequest) (*User, error) {
 	user := &User{
 		Email: req.Email,
 		Name:  req.Name,
@@ -31,7 +39,7 @@ func (s *Service) Create(ctx context.Context, req *CreateUserRequest) (*User, er
 	return user, nil
 }
 
-func (s *Service) GetByID(ctx context.Context, id int64) (*User, error) {
+func (s *service) GetByID(ctx context.Context, id int64) (*User, error) {
 	user, err := s.repo.GetByID(ctx, id)
 	if err != nil {
 		return nil, err
@@ -42,7 +50,7 @@ func (s *Service) GetByID(ctx context.Context, id int64) (*User, error) {
 	return user, nil
 }
 
-func (s *Service) List(ctx context.Context, limit, offset int) ([]*User, error) {
+func (s *service) List(ctx context.Context, limit, offset int) ([]*User, error) {
 	if limit <= 0 {
 		limit = 10
 	}
@@ -52,7 +60,7 @@ func (s *Service) List(ctx context.Context, limit, offset int) ([]*User, error) 
 	return s.repo.List(ctx, limit, offset)
 }
 
-func (s *Service) Update(ctx context.Context, id int64, req *UpdateUserRequest) (*User, error) {
+func (s *service) Update(ctx context.Context, id int64, req *UpdateUserRequest) (*User, error) {
 	user, err := s.repo.GetByID(ctx, id)
 	if err != nil {
 		return nil, err
@@ -75,6 +83,6 @@ func (s *Service) Update(ctx context.Context, id int64, req *UpdateUserRequest) 
 	return user, nil
 }
 
-func (s *Service) Delete(ctx context.Context, id int64) error {
+func (s *service) Delete(ctx context.Context, id int64) error {
 	return s.repo.Delete(ctx, id)
 }

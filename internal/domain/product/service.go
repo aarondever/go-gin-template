@@ -10,15 +10,23 @@ var (
 	ErrInvalidInput    = errors.New("invalid input")
 )
 
-type Service struct {
-	repo *Repository
+type Service interface {
+	Create(ctx context.Context, req *CreateProductRequest) (*Product, error)
+	GetByID(ctx context.Context, id int64) (*Product, error)
+	List(ctx context.Context, limit, offset int) ([]*Product, error)
+	Update(ctx context.Context, id int64, req *UpdateProductRequest) (*Product, error)
+	Delete(ctx context.Context, id int64) error
 }
 
-func NewService(repo *Repository) *Service {
-	return &Service{repo: repo}
+type service struct {
+	repo Repository
 }
 
-func (s *Service) Create(ctx context.Context, req *CreateProductRequest) (*Product, error) {
+func NewService(repo Repository) Service {
+	return &service{repo: repo}
+}
+
+func (s *service) Create(ctx context.Context, req *CreateProductRequest) (*Product, error) {
 	product := &Product{
 		Name:        req.Name,
 		Description: req.Description,
@@ -33,7 +41,7 @@ func (s *Service) Create(ctx context.Context, req *CreateProductRequest) (*Produ
 	return product, nil
 }
 
-func (s *Service) GetByID(ctx context.Context, id int64) (*Product, error) {
+func (s *service) GetByID(ctx context.Context, id int64) (*Product, error) {
 	product, err := s.repo.GetByID(ctx, id)
 	if err != nil {
 		return nil, err
@@ -44,7 +52,7 @@ func (s *Service) GetByID(ctx context.Context, id int64) (*Product, error) {
 	return product, nil
 }
 
-func (s *Service) List(ctx context.Context, limit, offset int) ([]*Product, error) {
+func (s *service) List(ctx context.Context, limit, offset int) ([]*Product, error) {
 	if limit <= 0 {
 		limit = 10
 	}
@@ -54,7 +62,7 @@ func (s *Service) List(ctx context.Context, limit, offset int) ([]*Product, erro
 	return s.repo.List(ctx, limit, offset)
 }
 
-func (s *Service) Update(ctx context.Context, id int64, req *UpdateProductRequest) (*Product, error) {
+func (s *service) Update(ctx context.Context, id int64, req *UpdateProductRequest) (*Product, error) {
 	product, err := s.repo.GetByID(ctx, id)
 	if err != nil {
 		return nil, err
@@ -83,6 +91,6 @@ func (s *Service) Update(ctx context.Context, id int64, req *UpdateProductReques
 	return product, nil
 }
 
-func (s *Service) Delete(ctx context.Context, id int64) error {
+func (s *service) Delete(ctx context.Context, id int64) error {
 	return s.repo.Delete(ctx, id)
 }
