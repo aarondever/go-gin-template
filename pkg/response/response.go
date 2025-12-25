@@ -6,13 +6,13 @@ import (
 )
 
 type Response struct {
-	Success bool        `json:"success"`
-	Message string      `json:"message"`
-	Data    interface{} `json:"data,omitempty"`
-	Error   string      `json:"error,omitempty"`
+	Success bool   `json:"success"`
+	Message string `json:"message"`
+	Data    any    `json:"data,omitempty"`
+	Error   string `json:"error,omitempty"`
 }
 
-func Success(c *gin.Context, code int, message string, data interface{}) {
+func Success(c *gin.Context, code int, message string, data any) {
 	c.JSON(code, Response{
 		Success: true,
 		Message: message,

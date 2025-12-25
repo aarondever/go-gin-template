@@ -2,10 +2,11 @@ package user
 
 import (
 	"errors"
-	"log/slog"
 	"net/http"
 	"strconv"
 
+	e "github.com/aarondever/go-gin-template/internal/shared/errors"
+	"github.com/aarondever/go-gin-template/pkg/response"
 	"github.com/gin-gonic/gin"
 )
 
@@ -20,105 +21,108 @@ func NewHandler(service Service) *Handler {
 func (h *Handler) RegisterRoutes(router *gin.RouterGroup) {
 	users := router.Group("/users")
 	{
-		users.POST("", h.Create)
-		users.GET("/:id", h.GetByID)
-		users.GET("", h.List)
-		users.PUT("/:id", h.Update)
-		users.DELETE("/:id", h.Delete)
+		users.POST("", h.CreateUser)
+		users.GET("/:id", h.GetUserByID)
+		users.GET("", h.ListUsers)
+		users.PUT("/:id", h.UpdateUser)
+		users.DELETE("/:id", h.DeleteUser)
 	}
 }
 
-func (h *Handler) Create(c *gin.Context) {
+func (h *Handler) CreateUser(c *gin.Context) {
 	var req CreateUserRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		response.Error(c, http.StatusBadRequest, "invalid request", err)
 		return
 	}
 
-	user, err := h.service.Create(c.Request.Context(), &req)
+	user, err := h.service.CreateUser(c.Request.Context(), req)
 	if err != nil {
-		slog.Error("failed to create user", "error", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+		response.Error(c, http.StatusInternalServerError, "failed to create user", err)
 		return
 	}
 
-	c.JSON(http.StatusCreated, user)
+	response.Success(c, http.StatusCreated, "user created successfully", user)
 }
 
-func (h *Handler) GetByID(c *gin.Context) {
-	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+func (h *Handler) GetUserByID(c *gin.Context) {
+	userID, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+		response.Error(c, http.StatusBadRequest, "invalid id", err)
 		return
 	}
 
-	user, err := h.service.GetByID(c.Request.Context(), id)
+	user, err := h.service.GetUserByID(c.Request.Context(), userID)
 	if err != nil {
-		if errors.Is(err, ErrUserNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
+		if errors.Is(err, e.ErrNotFound) {
+			response.Error(c, http.StatusNotFound, "user not found", err)
 			return
 		}
-		slog.Error("failed to get user", "error", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+
+		response.Error(c, http.StatusInternalServerError, "failed to get user", err)
 		return
 	}
 
-	c.JSON(http.StatusOK, user)
+	response.Success(c, http.StatusOK, "user retrieved successfully", user)
 }
 
-func (h *Handler) List(c *gin.Context) {
-	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
-	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
-
-	users, err := h.service.List(c.Request.Context(), limit, offset)
-	if err != nil {
-		slog.Error("failed to list users", "error", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+func (h *Handler) ListUsers(c *gin.Context) {
+	var req ListUsersRequest
+	if err := c.ShouldBindQuery(&req); err != nil {
+		response.Error(c, http.StatusBadRequest, "invalid request", err)
 		return
 	}
 
-	c.JSON(http.StatusOK, users)
+	users, p, err := h.service.ListUsers(c.Request.Context(), req)
+	if err != nil {
+		response.Error(c, http.StatusInternalServerError, "failed to list users", err)
+		return
+	}
+
+	response.Success(c, http.StatusOK, "users retrieved successfully", &ListUsersResponse{
+		Users:      users,
+		Pagination: p,
+	})
 }
 
-func (h *Handler) Update(c *gin.Context) {
-	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+func (h *Handler) UpdateUser(c *gin.Context) {
+	userID, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+		response.Error(c, http.StatusBadRequest, "invalid id", err)
 		return
 	}
 
 	var req UpdateUserRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		response.Error(c, http.StatusBadRequest, "invalid request", err)
 		return
 	}
 
-	user, err := h.service.Update(c.Request.Context(), id, &req)
+	user, err := h.service.UpdateUser(c.Request.Context(), userID, req)
 	if err != nil {
-		if errors.Is(err, ErrUserNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
+		if errors.Is(err, e.ErrNotFound) {
+			response.Error(c, http.StatusNotFound, "user not found", err)
 			return
 		}
-		slog.Error("failed to update user", "error", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+
+		response.Error(c, http.StatusInternalServerError, "failed to update user", err)
 		return
 	}
 
-	c.JSON(http.StatusOK, user)
+	response.Success(c, http.StatusOK, "user updated successfully", user)
 }
 
-func (h *Handler) Delete(c *gin.Context) {
-	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+func (h *Handler) DeleteUser(c *gin.Context) {
+	userID, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+		response.Error(c, http.StatusBadRequest, "invalid id", err)
 		return
 	}
 
-	if err := h.service.Delete(c.Request.Context(), id); err != nil {
-		slog.Error("failed to delete user", "error", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal server error"})
+	if err := h.service.DeleteUser(c.Request.Context(), userID); err != nil {
+		response.Error(c, http.StatusInternalServerError, "failed to delete user", err)
 		return
 	}
 
-	c.Status(http.StatusNoContent)
+	response.Success(c, http.StatusNoContent, "user deleted successfully", nil)
 }

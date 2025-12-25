@@ -44,15 +44,15 @@ func Load() (*Config, error) {
 		Server: ServerConfig{
 			Port:         getStringEnv("SERVER_PORT", "8080"),
 			Mode:         getStringEnv("SERVER_MODE", "release"),
-			ReadTimeout:  getIntEnv("SERVER_READ_TIMEOUT", 15),
-			WriteTimeout: getIntEnv("SERVER_WRITE_TIMEOUT", 15),
+			ReadTimeout:  getIntEnv("SERVER_READ_TIMEOUT", 30),
+			WriteTimeout: getIntEnv("SERVER_WRITE_TIMEOUT", 30),
 		},
 		Database: DatabaseConfig{
 			Host:            getStringEnv("DB_HOST", "localhost"),
 			Port:            getStringEnv("DB_PORT", "5432"),
 			Username:        getStringEnv("DB_USERNAME", "postgres"),
 			Password:        getStringEnv("DB_PASSWORD", "postgres"),
-			Database:        getStringEnv("DB_DATABASE", "myapp"),
+			Database:        getStringEnv("DB_DATABASE", "postgres"),
 			MaxOpenConns:    getIntEnv("DB_MAX_OPEN_CONNS", 25),
 			MaxIdleConns:    getIntEnv("DB_MAX_IDLE_CONNS", 5),
 			ConnMaxLifetime: getIntEnv("DB_CONN_MAX_LIFETIME", 300),

@@ -2,18 +2,18 @@ package user
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 
-	"github.com/aarondever/go-gin-template/internal/database"
+	"github.com/aarondever/go-gin-template/internal/shared/database"
+	"gorm.io/gorm"
 )
 
 type Repository interface {
-	Create(ctx context.Context, user *User) error
-	GetByID(ctx context.Context, id int64) (*User, error)
-	List(ctx context.Context, limit, offset int) ([]*User, error)
-	Update(ctx context.Context, user *User) error
-	Delete(ctx context.Context, id int64) error
+	CreateUser(ctx context.Context, tx *gorm.DB, user *User) error
+	GetUserByID(ctx context.Context, userID int64) (*User, error)
+	ListUsers(ctx context.Context, filter ListUsersFilter) ([]*User, int64, error)
+	UpdateUser(ctx context.Context, tx *gorm.DB, user *User) error
+	DeleteUser(ctx context.Context, tx *gorm.DB, userID int64) error
 }
 
 type repository struct {
@@ -21,55 +21,47 @@ type repository struct {
 }
 
 func NewRepository(db *database.Database) Repository {
+	db.DB.AutoMigrate(&User{})
 	return &repository{db: db}
 }
 
-func (r *repository) Create(ctx context.Context, user *User) error {
-	query := `
-		INSERT INTO users (email, name, created_at, updated_at)
-		VALUES ($1, $2, NOW(), NOW())
-		RETURNING id, created_at, updated_at`
-
-	return r.db.QueryRowContext(ctx, query, user.Email, user.Name).
-		Scan(&user.ID, &user.CreatedAt, &user.UpdatedAt)
+func (r *repository) CreateUser(ctx context.Context, tx *gorm.DB, user *User) error {
+	return tx.WithContext(ctx).Create(user).Error
 }
 
-func (r *repository) GetByID(ctx context.Context, id int64) (*User, error) {
+func (r *repository) GetUserByID(ctx context.Context, userID int64) (*User, error) {
 	var user User
-	query := `SELECT id, email, name, created_at, updated_at FROM users WHERE id = $1`
-
-	err := r.db.GetContext(ctx, &user, query, id)
+	err := r.db.WithContext(ctx).Take(&user, userID).Error
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}
+
 		return nil, err
 	}
 
 	return &user, nil
 }
 
-func (r *repository) List(ctx context.Context, limit, offset int) ([]*User, error) {
+func (r *repository) ListUsers(ctx context.Context, filter ListUsersFilter) ([]*User, int64, error) {
 	var users []*User
-	query := `SELECT id, email, name, created_at, updated_at FROM users ORDER BY id LIMIT $1 OFFSET $2`
+	var total int64
 
-	err := r.db.SelectContext(ctx, &users, query, limit, offset)
-	return users, err
+	err := r.db.WithContext(ctx).
+		Model(&User{}).
+		Count(&total).
+		Order("id").
+		Limit(filter.Limit).
+		Offset(filter.Offset).
+		Find(&users).Error
+
+	return users, total, err
 }
 
-func (r *repository) Update(ctx context.Context, user *User) error {
-	query := `
-		UPDATE users 
-		SET email = $1, name = $2, updated_at = NOW()
-		WHERE id = $3
-		RETURNING updated_at`
-
-	return r.db.QueryRowContext(ctx, query, user.Email, user.Name, user.ID).
-		Scan(&user.UpdatedAt)
+func (r *repository) UpdateUser(ctx context.Context, tx *gorm.DB, user *User) error {
+	return tx.WithContext(ctx).Updates(user).Error
 }
 
-func (r *repository) Delete(ctx context.Context, id int64) error {
-	query := `DELETE FROM users WHERE id = $1`
-	_, err := r.db.ExecContext(ctx, query, id)
-	return err
+func (r *repository) DeleteUser(ctx context.Context, tx *gorm.DB, userID int64) error {
+	return tx.WithContext(ctx).Delete(&User{}, userID).Error
 }

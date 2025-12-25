@@ -59,3 +59,7 @@ func Fatal(msg string, args ...any) {
 	log.Error(msg, args...)
 	os.Exit(1)
 }
+
+func GetLogger() *slog.Logger {
+	return log
+}

@@ -10,11 +10,10 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/aarondever/go-gin-template/internal/config"
-	"github.com/aarondever/go-gin-template/internal/database"
-	"github.com/aarondever/go-gin-template/internal/domain/product"
 	"github.com/aarondever/go-gin-template/internal/domain/user"
-	"github.com/aarondever/go-gin-template/internal/middleware"
+	"github.com/aarondever/go-gin-template/internal/shared/config"
+	"github.com/aarondever/go-gin-template/internal/shared/database"
+	"github.com/aarondever/go-gin-template/internal/shared/middleware"
 	"github.com/aarondever/go-gin-template/pkg/logger"
 	"github.com/gin-gonic/gin"
 )
@@ -30,7 +29,7 @@ func main() {
 	logger.Init(cfg.Log.Level, cfg.Log.Format)
 
 	// Initialize database
-	db, err := database.NewDatabase(cfg.Database)
+	db, err := database.New(cfg.Database, logger.GetLogger())
 	if err != nil {
 		logger.Fatal("Failed to connect to database", "error", err)
 	}
@@ -40,15 +39,12 @@ func main() {
 
 	// Initialize repositories
 	userRepo := user.NewRepository(db)
-	productRepo := product.NewRepository(db)
 
 	// Initialize services
-	userService := user.NewService(userRepo)
-	productService := product.NewService(productRepo)
+	userService := user.NewService(db, userRepo)
 
 	// Initialize handlers
 	userHandler := user.NewHandler(userService)
-	productHandler := product.NewHandler(productService)
 
 	// Setup router
 	gin.SetMode(gin.ReleaseMode)
@@ -68,7 +64,6 @@ func main() {
 
 	// Register routes
 	userHandler.RegisterRoutes(v1)
-	productHandler.RegisterRoutes(v1)
 
 	// Create HTTP server
 	srv := &http.Server{
