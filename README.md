@@ -1,16 +1,14 @@
 # Go Gin Template
 
 A batteries-included template for building REST APIs in Go using the Gin framework. It features a clean architecture,
-dependency injection with Google Wire, database access with sqlc, PostgreSQL migrations with Goose, Redis, hot-reload
-with Air, and a Docker-based local environment.
+PostgreSQL with GORM, database migrations with GORM AutoMigrate, Redis, hot-reload with Air, and a Docker-based local environment.
 
 ## Features
 
 - Gin web framework
-- Dependency Injection via Google Wire
-- PostgreSQL with sqlc type-safe queries
-- Database migrations with Goose
-- Redis (optional) integration
+- PostgreSQL with GORM ORM
+- Database migrations with GORM AutoMigrate
+- Redis integration
 - Docker Compose for app + Postgres + Redis
 - Air for live reload during development
 - Structured logging with slog (JSON or text)
@@ -18,24 +16,24 @@ with Air, and a Docker-based local environment.
 
 ## Project Structure
 
-```
+```text
 .
 ├── cmd/api/main.go                # App entrypoint
 ├── internal/                      # Application code
-│   ├── config/                    # Config loading (env + YAML)
-│   ├── database/                  # DB setup and sqlc generated code
-│   ├── handlers/                  # HTTP handlers (Gin)
-│   ├── models/                    # Domain models and errors
-│   ├── services/                  # Business logic
-│   ├── utils/                     # Helpers
-│   ├── wire.go, wire_gen.go       # DI wiring
-├── sql/                           # SQL queries and migrations
-│   ├── queries/                   # sqlc input queries
-│   └── schema/                    # Goose migrations
+│   ├── domain/                    # Domain logic (handlers, services, repositories)
+│   ├── shared/                    # Shared components
+│   │   ├── config/                # Config loading (env variables)
+│   │   ├── database/              # DB and Redis setup
+│   │   ├── errors/                # Error definitions
+│   │   ├── middleware/            # HTTP middleware
+│   │   └── model/                 # Base models
+├── pkg/                           # Public packages
+│   ├── logger/                    # Logger utilities
+│   ├── pagination/                # Pagination helpers
+│   └── response/                  # Response helpers
 ├── Dockerfile
 ├── docker-compose.yml
 ├── Makefile
-├── sqlc.yaml
 └── README.md
 ```
 
@@ -48,9 +46,6 @@ with Air, and a Docker-based local environment.
 You can install necessary CLI tools via the Makefile:
 
 - Air (live reload)
-- Goose (migrations)
-- sqlc (code generation)
-- Wire (dependency injection)
 
 Run: `make install-deps`
 
@@ -61,102 +56,54 @@ Run: `make install-deps`
 1. Build and start containers:
     - `make docker`  (equivalent to clean + build + up)
     - or `make docker-build && make docker-up`
-2. The API will be available at: http://localhost:8080
+2. The API will be available at: <http://localhost:8080>
 
 ### Option B: Run locally on your machine
 
 1. Start Postgres and Redis (recommended via Docker):
-    - `docker compose up -d postgres redis`
+   - `docker compose up -d postgres redis`
 2. Configure environment and config (see Configuration section).
-3. Generate code and run migrations:
-    - `make sqlc`
-    - `make migrate-up`
-4. Start the app with live reload:
-    - `make dev`
+3. Start the app with live reload:
+   - `make dev`
+
+   Note: Database migrations are handled automatically via GORM AutoMigrate when the application starts.
 
 ## Configuration
 
-Configuration is loaded from environment variables and optionally overridden by a YAML file passed with the
-`-config.file` flag (default: `config.yaml`). A `.env` file is also supported and automatically loaded if present.
+Configuration is loaded from environment variables. A `.env` file is also supported and automatically loaded if present.
 
-Environment variables (defaults in parentheses):
+Copy `.env.example` to `.env` and update the values as needed:
 
-- APP_ENV (development)
-- TZ (UTC)
-- HOST (0.0.0.0)
-- PORT (8080)
-- DB_HOST (localhost)
-- DB_PORT (5432)
-- DB_USER (postgres)
-- DB_PASSWORD (postgres)
-- DB_NAME (postgres)
-- DB_SSLMODE (disable)
-- REDIS_HOST (localhost)
-- REDIS_PORT (6379)
-- REDIS_USER ("")
-- REDIS_PASSWORD ("")
-- REDIS_DB (0)
-- LOG_LEVEL (info) [debug|info|warn|error]
-- LOG_FORMAT (text) [text|json]
-
-Example `.env`:
-
-```
-APP_ENV=development
-HOST=0.0.0.0
-PORT=8080
-DB_HOST=localhost
-DB_PORT=5432
-DB_USER=postgres
-DB_PASSWORD=postgres
-DB_NAME=postgres
-REDIS_HOST=localhost
-LOG_LEVEL=debug
-LOG_FORMAT=text
-TZ=UTC
+```bash
+cp .env.example .env
 ```
 
-Optional `config.yaml` overrides:
+See `.env.example` for all available configuration options and their defaults.
 
+## Database and Migrations
+
+This project uses GORM for database operations and migrations. Database migrations are handled automatically via GORM's `AutoMigrate` feature, which runs when repositories are initialized.
+
+### How Migrations Work
+
+- Migrations are defined in your domain models (e.g., `internal/domain/user/user.go`)
+- When a repository is created, it automatically calls `AutoMigrate` on the model
+- GORM will create or update tables based on your model definitions
+- No manual migration commands are needed
+
+### Example
+
+```go
+// In repository.go
+func NewRepository(db *database.Database) Repository {
+    db.DB.AutoMigrate(&User{})  // Automatically creates/updates the users table
+    return &repository{db: db}
+}
 ```
-server:
-  host: 0.0.0.0
-  port: 8080
-
-database:
-  host: localhost
-  port: 5432
-  username: postgres
-  password: postgres
-  name: postgres
-  sslmode: disable
-
-redis:
-  host: localhost
-  port: 6379
-  username: ""
-  password: ""
-  db: 0
-
-logging:
-  level: info
-  format: text
-```
-
-## Database and Code Generation
-
-- sqlc: generate type-safe Go code from SQL files in `sql/queries`
-    - `make sqlc`
-- Goose: run migrations in `sql/schema`
-    - `make migrate-up`
-    - `make migrate-down`
-    - `make migrate-status`
-
-The Makefile uses a default connection string for local development:
-`postgres://postgres:postgres@localhost:5432/postgres`
 
 When using Docker Compose, the app service is linked to `postgres` and `redis` services. Environment variables are
-provided automatically by docker-compose.yml.
+provided automatically by docker-compose.yml. Note that docker-compose.yml uses `DB_USER` and `DB_NAME` which map to
+`DB_USERNAME` and `DB_DATABASE` in the application config.
 
 ## Running and Building
 
@@ -169,26 +116,37 @@ provided automatically by docker-compose.yml.
 
 ## API Endpoints
 
-User routes are available under the `/users/v1` prefix.
+**Health Check:**
 
-- GET `/users/v1/` — List users with pagination
-    - Query params: `page` (default 1), `page_size` (default 10)
-- GET `/users/v1/:id` — Get user by ID (UUID)
-- POST `/users/v1/` — Create user
-- PUT `/users/v1/:id` — Update user by ID (UUID)
+- GET `/health` — Health check endpoint
+
+**User routes** (available under `/api/v1/users`):
+
+- GET `/api/v1/users` — List users with pagination
+  - Query params: `page` (default 1), `page_size` (default 10)
+- GET `/api/v1/users/:id` — Get user by ID
+- POST `/api/v1/users` — Create user
+- PUT `/api/v1/users/:id` — Update user by ID
+- DELETE `/api/v1/users/:id` — Delete user by ID
 
 Example requests:
 
-List users
+**Health check:**
 
-```
-curl "http://localhost:8080/users/v1/?page=1&page_size=10"
+```bash
+curl http://localhost:8080/health
 ```
 
-Create user
+**List users:**
 
+```bash
+curl "http://localhost:8080/api/v1/users?page=1&page_size=10"
 ```
-curl -X POST http://localhost:8080/users/v1/ \
+
+**Create user:**
+
+```bash
+curl -X POST http://localhost:8080/api/v1/users \
   -H "Content-Type: application/json" \
   -d '{
     "username": "alice",
@@ -198,10 +156,16 @@ curl -X POST http://localhost:8080/users/v1/ \
   }'
 ```
 
-Update user
+**Get user:**
 
+```bash
+curl http://localhost:8080/api/v1/users/1
 ```
-curl -X PUT http://localhost:8080/users/v1/<UUID> \
+
+**Update user:**
+
+```bash
+curl -X PUT http://localhost:8080/api/v1/users/1 \
   -H "Content-Type: application/json" \
   -d '{
     "username": "alice",
@@ -211,10 +175,10 @@ curl -X PUT http://localhost:8080/users/v1/<UUID> \
   }'
 ```
 
-Get user
+**Delete user:**
 
-```
-curl http://localhost:8080/users/v1/<UUID>
+```bash
+curl -X DELETE http://localhost:8080/api/v1/users/1
 ```
 
 ## Docker
@@ -232,8 +196,8 @@ The API is exposed on `localhost:8080`. Postgres on `localhost:5432`. Redis on `
 ## Troubleshooting
 
 - If Air is not found, run `make install-deps`.
-- If migrations fail, ensure Postgres is running and the connection string/variables are correct.
-- If sqlc code seems outdated, run `make sqlc` after editing SQL files.
+- If database connection fails, ensure Postgres is running and the connection variables are correct.
+- If migrations fail, check that your GORM models are correctly defined and that the database user has proper permissions.
 - On Windows with WSL, ensure your Docker is accessible from WSL and paths are correct.
 
 ## License
