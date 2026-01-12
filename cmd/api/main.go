@@ -29,13 +29,14 @@ func main() {
 	logger.Init(cfg.Log.Level, cfg.Log.Format)
 
 	// Initialize database
-	db, err := database.New(cfg.Database, logger.GetLogger())
+	db, err := database.New(cfg.Database, cfg.Redis, logger.GetLogger())
 	if err != nil {
 		logger.Fatal("Failed to connect to database", "error", err)
 	}
 	defer db.Close()
 
 	logger.Info("Database connected successfully")
+	logger.Info("Redis connected successfully")
 
 	// Initialize repositories
 	userRepo := user.NewRepository(db)
