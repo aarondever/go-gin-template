@@ -11,7 +11,7 @@ import (
 type Repository interface {
 	CreateUser(ctx context.Context, tx *gorm.DB, user *User) error
 	GetUserByID(ctx context.Context, userID int64) (*User, error)
-	ListUsers(ctx context.Context, filter ListUsersFilter) ([]*User, int64, error)
+	ListUsers(ctx context.Context, filter UserListFilter) ([]*User, int64, error)
 	UpdateUser(ctx context.Context, tx *gorm.DB, user *User) error
 	DeleteUser(ctx context.Context, tx *gorm.DB, userID int64) error
 }
@@ -43,19 +43,26 @@ func (r *repository) GetUserByID(ctx context.Context, userID int64) (*User, erro
 	return &user, nil
 }
 
-func (r *repository) ListUsers(ctx context.Context, filter ListUsersFilter) ([]*User, int64, error) {
+func (r *repository) ListUsers(ctx context.Context, filter UserListFilter) ([]*User, int64, error) {
 	var users []*User
 	var total int64
 
-	err := r.db.WithContext(ctx).
+	query := r.db.WithContext(ctx).
 		Model(&User{}).
 		Count(&total).
-		Order("id").
 		Limit(filter.Limit).
-		Offset(filter.Offset).
-		Find(&users).Error
+		Offset(filter.Offset)
 
-	return users, total, err
+	if filter.Name != "" {
+		query = query.Where("name LIKE ?", "%"+filter.Name+"%")
+	}
+
+	err := query.Find(&users).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return users, total, nil
 }
 
 func (r *repository) UpdateUser(ctx context.Context, tx *gorm.DB, user *User) error {

@@ -22,10 +22,10 @@ func (h *Handler) RegisterRoutes(router *gin.RouterGroup) {
 	users := router.Group("/users")
 	{
 		users.POST("", h.CreateUser)
-		users.GET("/:id", h.GetUserByID)
-		users.GET("", h.ListUsers)
-		users.PUT("/:id", h.UpdateUser)
-		users.DELETE("/:id", h.DeleteUser)
+		users.GET("/:userID", h.GetUserByID)
+		users.GET("", h.GetUserList)
+		users.PUT("/:userID", h.UpdateUser)
+		users.DELETE("/:userID", h.DeleteUser)
 	}
 }
 
@@ -36,17 +36,20 @@ func (h *Handler) CreateUser(c *gin.Context) {
 		return
 	}
 
-	user, err := h.service.CreateUser(c.Request.Context(), req)
+	user, err := h.service.CreateUser(c.Request.Context(), &User{
+		Name:  req.Name,
+		Email: req.Email,
+	})
 	if err != nil {
 		response.Error(c, http.StatusInternalServerError, "failed to create user", err)
 		return
 	}
 
-	response.Success(c, http.StatusCreated, "user created successfully", user)
+	response.Success(c, http.StatusCreated, "user created successfully", UserToResponse(user))
 }
 
 func (h *Handler) GetUserByID(c *gin.Context) {
-	userID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	userID, err := strconv.ParseInt(c.Param("userID"), 10, 64)
 	if err != nil {
 		response.Error(c, http.StatusBadRequest, "invalid id", err)
 		return
@@ -63,30 +66,35 @@ func (h *Handler) GetUserByID(c *gin.Context) {
 		return
 	}
 
-	response.Success(c, http.StatusOK, "user retrieved successfully", user)
+	response.Success(c, http.StatusOK, "user retrieved successfully", UserToResponse(user))
 }
 
-func (h *Handler) ListUsers(c *gin.Context) {
-	var req ListUsersRequest
+func (h *Handler) GetUserList(c *gin.Context) {
+	var req GetUserListRequest
 	if err := c.ShouldBindQuery(&req); err != nil {
 		response.Error(c, http.StatusBadRequest, "invalid request", err)
 		return
 	}
 
-	users, p, err := h.service.ListUsers(c.Request.Context(), req)
+	users, total, err := h.service.GetUserList(c.Request.Context(), UserListFilter{
+		Name:   req.Name,
+		Limit:  req.GetLimit(),
+		Offset: req.GetOffset(),
+	})
 	if err != nil {
 		response.Error(c, http.StatusInternalServerError, "failed to list users", err)
 		return
 	}
 
-	response.Success(c, http.StatusOK, "users retrieved successfully", &ListUsersResponse{
-		Users:      users,
-		Pagination: p,
+	req.Pagination.SetTotal(total)
+	response.Success(c, http.StatusOK, "users retrieved successfully", &UserListResponse{
+		Users:      UserListToResponse(users),
+		Pagination: req.Pagination,
 	})
 }
 
 func (h *Handler) UpdateUser(c *gin.Context) {
-	userID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	userID, err := strconv.ParseInt(c.Param("userID"), 10, 64)
 	if err != nil {
 		response.Error(c, http.StatusBadRequest, "invalid id", err)
 		return
@@ -98,27 +106,52 @@ func (h *Handler) UpdateUser(c *gin.Context) {
 		return
 	}
 
-	user, err := h.service.UpdateUser(c.Request.Context(), userID, req)
+	// Check if user exists
+	_, err = h.service.GetUserByID(c.Request.Context(), userID)
 	if err != nil {
 		if errors.Is(err, e.ErrNotFound) {
 			response.Error(c, http.StatusNotFound, "user not found", err)
 			return
 		}
 
+		response.Error(c, http.StatusInternalServerError, "failed to get user", err)
+		return
+	}
+
+	// Update user
+	user, err := h.service.UpdateUser(c.Request.Context(), &User{
+		ID:    userID,
+		Name:  req.Name,
+		Email: req.Email,
+	})
+	if err != nil {
 		response.Error(c, http.StatusInternalServerError, "failed to update user", err)
 		return
 	}
 
-	response.Success(c, http.StatusOK, "user updated successfully", user)
+	response.Success(c, http.StatusOK, "user updated successfully", UserToResponse(user))
 }
 
 func (h *Handler) DeleteUser(c *gin.Context) {
-	userID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	userID, err := strconv.ParseInt(c.Param("userID"), 10, 64)
 	if err != nil {
 		response.Error(c, http.StatusBadRequest, "invalid id", err)
 		return
 	}
 
+	// Check if user exists
+	_, err = h.service.GetUserByID(c.Request.Context(), userID)
+	if err != nil {
+		if errors.Is(err, e.ErrNotFound) {
+			response.Error(c, http.StatusNotFound, "user not found", err)
+			return
+		}
+
+		response.Error(c, http.StatusInternalServerError, "failed to get user", err)
+		return
+	}
+
+	// Delete user
 	if err := h.service.DeleteUser(c.Request.Context(), userID); err != nil {
 		response.Error(c, http.StatusInternalServerError, "failed to delete user", err)
 		return

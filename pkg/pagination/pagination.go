@@ -30,8 +30,3 @@ func (p *Pagination) SetTotal(total int64) {
 	limit := p.GetLimit()
 	p.TotalPages = int((total + int64(limit) - 1) / int64(limit))
 }
-
-type PaginationFilter struct {
-	Limit  int
-	Offset int
-}
