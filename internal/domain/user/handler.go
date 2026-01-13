@@ -45,7 +45,7 @@ func (h *Handler) CreateUser(c *gin.Context) {
 		return
 	}
 
-	response.Success(c, http.StatusCreated, "user created successfully", UserToResponse(user))
+	response.Success(c, http.StatusCreated, "user created successfully", user)
 }
 
 func (h *Handler) GetUserByID(c *gin.Context) {
@@ -66,7 +66,7 @@ func (h *Handler) GetUserByID(c *gin.Context) {
 		return
 	}
 
-	response.Success(c, http.StatusOK, "user retrieved successfully", UserToResponse(user))
+	response.Success(c, http.StatusOK, "user retrieved successfully", user)
 }
 
 func (h *Handler) GetUserList(c *gin.Context) {
@@ -88,7 +88,7 @@ func (h *Handler) GetUserList(c *gin.Context) {
 
 	req.Pagination.SetTotal(total)
 	response.Success(c, http.StatusOK, "users retrieved successfully", &UserListResponse{
-		Users:      UserListToResponse(users),
+		Users:      users,
 		Pagination: req.Pagination,
 	})
 }
@@ -129,7 +129,7 @@ func (h *Handler) UpdateUser(c *gin.Context) {
 		return
 	}
 
-	response.Success(c, http.StatusOK, "user updated successfully", UserToResponse(user))
+	response.Success(c, http.StatusOK, "user updated successfully", user)
 }
 
 func (h *Handler) DeleteUser(c *gin.Context) {

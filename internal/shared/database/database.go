@@ -29,7 +29,7 @@ func New(dbCfg config.DatabaseConfig, redisCfg config.RedisConfig, s *slog.Logge
 
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
 		Logger: logger.NewSlogLogger(s, logger.Config{
-			LogLevel: logger.Info,
+			LogLevel: logger.Warn,
 		}),
 	})
 	if err != nil {

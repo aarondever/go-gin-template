@@ -12,34 +12,12 @@ type UpdateUserRequest struct {
 	Email *string `json:"email" binding:"omitempty,email"`
 }
 
-type UserResponse struct {
-	ID    int64   `json:"id"`
-	Name  string  `json:"name"`
-	Email *string `json:"email"`
-}
-
-func UserToResponse(user *User) *UserResponse {
-	return &UserResponse{
-		ID:    user.ID,
-		Name:  user.Name,
-		Email: user.Email,
-	}
-}
-
 type GetUserListRequest struct {
 	Name string `form:"name"`
 	pagination.Pagination
 }
 
 type UserListResponse struct {
-	Users []*UserResponse `json:"users"`
+	Users []*User `json:"users"`
 	pagination.Pagination
-}
-
-func UserListToResponse(users []*User) []*UserResponse {
-	responses := make([]*UserResponse, len(users))
-	for i, user := range users {
-		responses[i] = UserToResponse(user)
-	}
-	return responses
 }

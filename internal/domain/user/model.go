@@ -5,10 +5,10 @@ import (
 )
 
 type User struct {
+	ID    int64   `gorm:"primaryKey;autoIncrement" json:"id"`
+	Name  string  `gorm:"not null" json:"name"`
+	Email *string `gorm:"uniqueIndex" json:"email"`
 	model.BaseModel
-	ID    int64   `gorm:"primaryKey;autoIncrement"`
-	Name  string  `gorm:"not null"`
-	Email *string `gorm:"uniqueIndex"`
 }
 
 type UserListFilter struct {
