@@ -21,3 +21,10 @@ type UserListResponse struct {
 	Users []*User `json:"users"`
 	pagination.Pagination
 }
+
+// Filters
+type UserListFilter struct {
+	Name   string
+	Limit  int
+	Offset int
+}

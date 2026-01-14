@@ -10,9 +10,3 @@ type User struct {
 	Email *string `gorm:"uniqueIndex" json:"email"`
 	model.BaseModel
 }
-
-type UserListFilter struct {
-	Name   string
-	Limit  int
-	Offset int
-}
