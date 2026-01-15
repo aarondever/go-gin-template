@@ -3,6 +3,7 @@ package user
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/aarondever/go-gin-template/internal/shared/database"
 	"gorm.io/gorm"
@@ -11,7 +12,7 @@ import (
 type Repository interface {
 	CreateUser(ctx context.Context, tx *gorm.DB, user *User) error
 	GetUserByID(ctx context.Context, userID int64) (*User, error)
-	ListUsers(ctx context.Context, filter UserListFilter) ([]*User, int64, error)
+	GetUserList(ctx context.Context, filter UserListFilter) ([]*User, int64, error)
 	UpdateUser(ctx context.Context, tx *gorm.DB, user *User) error
 	DeleteUser(ctx context.Context, tx *gorm.DB, userID int64) error
 }
@@ -26,7 +27,11 @@ func NewRepository(db *database.Database) Repository {
 }
 
 func (r *repository) CreateUser(ctx context.Context, tx *gorm.DB, user *User) error {
-	return tx.WithContext(ctx).Create(user).Error
+	if err := tx.WithContext(ctx).Create(user).Error; err != nil {
+		return fmt.Errorf("failed to create user: %w", err)
+	}
+
+	return nil
 }
 
 func (r *repository) GetUserByID(ctx context.Context, userID int64) (*User, error) {
@@ -37,19 +42,18 @@ func (r *repository) GetUserByID(ctx context.Context, userID int64) (*User, erro
 			return nil, nil
 		}
 
-		return nil, err
+		return nil, fmt.Errorf("failed to get user by id: %w", err)
 	}
 
 	return &user, nil
 }
 
-func (r *repository) ListUsers(ctx context.Context, filter UserListFilter) ([]*User, int64, error) {
+func (r *repository) GetUserList(ctx context.Context, filter UserListFilter) ([]*User, int64, error) {
 	var users []*User
 	var total int64
 
 	query := r.db.WithContext(ctx).
 		Model(&User{}).
-		Count(&total).
 		Limit(filter.Limit).
 		Offset(filter.Offset)
 
@@ -57,18 +61,29 @@ func (r *repository) ListUsers(ctx context.Context, filter UserListFilter) ([]*U
 		query = query.Where("name LIKE ?", "%"+filter.Name+"%")
 	}
 
-	err := query.Find(&users).Error
-	if err != nil {
-		return nil, 0, err
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, fmt.Errorf("failed to count users: %w", err)
+	}
+
+	if err := query.Find(&users).Error; err != nil {
+		return nil, 0, fmt.Errorf("failed to find users: %w", err)
 	}
 
 	return users, total, nil
 }
 
 func (r *repository) UpdateUser(ctx context.Context, tx *gorm.DB, user *User) error {
-	return tx.WithContext(ctx).Updates(user).Error
+	if err := tx.WithContext(ctx).Updates(user).Error; err != nil {
+		return fmt.Errorf("failed to update user: %w", err)
+	}
+
+	return nil
 }
 
 func (r *repository) DeleteUser(ctx context.Context, tx *gorm.DB, userID int64) error {
-	return tx.WithContext(ctx).Delete(&User{}, userID).Error
+	if err := tx.WithContext(ctx).Delete(&User{}, userID).Error; err != nil {
+		return fmt.Errorf("failed to delete user: %w", err)
+	}
+
+	return nil
 }

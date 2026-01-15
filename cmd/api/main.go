@@ -42,7 +42,7 @@ func main() {
 	userRepo := user.NewRepository(db)
 
 	// Initialize services
-	userService := user.NewService(db, userRepo)
+	userService := user.NewService(userRepo, db)
 
 	// Initialize handlers
 	userHandler := user.NewHandler(userService)

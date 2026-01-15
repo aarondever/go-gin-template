@@ -17,12 +17,12 @@ type Service interface {
 }
 
 type service struct {
-	db   *database.Database
 	repo Repository
+	db   *database.Database
 }
 
-func NewService(db *database.Database, repo Repository) Service {
-	return &service{db: db, repo: repo}
+func NewService(repo Repository, db *database.Database) Service {
+	return &service{repo: repo, db: db}
 }
 
 func (s *service) CreateUser(ctx context.Context, user *User) (*User, error) {
@@ -50,9 +50,9 @@ func (s *service) GetUserByID(ctx context.Context, userID int64) (*User, error) 
 }
 
 func (s *service) GetUserList(ctx context.Context, filters UserListFilter) ([]*User, int64, error) {
-	users, total, err := s.repo.ListUsers(ctx, filters)
+	users, total, err := s.repo.GetUserList(ctx, filters)
 	if err != nil {
-		logger.Error("failed to list users", "error", err)
+		logger.Error("failed to get user list", "error", err)
 		return nil, 0, err
 	}
 
