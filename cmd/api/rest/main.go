@@ -10,7 +10,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/aarondever/go-gin-template/internal/domain/user"
+	"github.com/aarondever/go-gin-template/internal/handler"
+	"github.com/aarondever/go-gin-template/internal/repository"
+	"github.com/aarondever/go-gin-template/internal/service"
 	"github.com/aarondever/go-gin-template/internal/shared/config"
 	"github.com/aarondever/go-gin-template/internal/shared/database"
 	"github.com/aarondever/go-gin-template/internal/shared/middleware"
@@ -39,13 +41,13 @@ func main() {
 	logger.Info("Redis connected successfully")
 
 	// Initialize repositories
-	userRepo := user.NewRepository(db)
+	userRepo := repository.NewUserRepository(db)
 
 	// Initialize services
-	userService := user.NewService(userRepo, db)
+	userService := service.NewUserService(userRepo, db)
 
 	// Initialize handlers
-	userHandler := user.NewHandler(userService)
+	userHandler := handler.NewUserHandler(userService)
 
 	// Setup router
 	gin.SetMode(gin.ReleaseMode)

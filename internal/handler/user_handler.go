@@ -1,24 +1,27 @@
-package user
+package handler
 
 import (
 	"errors"
 	"net/http"
 	"strconv"
 
+	"github.com/aarondever/go-gin-template/internal/dto"
+	"github.com/aarondever/go-gin-template/internal/model"
+	"github.com/aarondever/go-gin-template/internal/service"
 	e "github.com/aarondever/go-gin-template/internal/shared/errors"
 	"github.com/aarondever/go-gin-template/pkg/response"
 	"github.com/gin-gonic/gin"
 )
 
-type Handler struct {
-	service Service
+type UserHandler struct {
+	service service.UserService
 }
 
-func NewHandler(service Service) *Handler {
-	return &Handler{service: service}
+func NewUserHandler(svc service.UserService) *UserHandler {
+	return &UserHandler{service: svc}
 }
 
-func (h *Handler) RegisterRoutes(router *gin.RouterGroup) {
+func (h *UserHandler) RegisterRoutes(router *gin.RouterGroup) {
 	users := router.Group("/users")
 	{
 		users.POST("", h.CreateUser)
@@ -29,14 +32,14 @@ func (h *Handler) RegisterRoutes(router *gin.RouterGroup) {
 	}
 }
 
-func (h *Handler) CreateUser(c *gin.Context) {
-	var req CreateUserRequest
+func (h *UserHandler) CreateUser(c *gin.Context) {
+	var req dto.CreateUserRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.Error(c, http.StatusBadRequest, "invalid request", err)
 		return
 	}
 
-	user, err := h.service.CreateUser(c.Request.Context(), &User{
+	user, err := h.service.CreateUser(c.Request.Context(), &model.User{
 		Name:  req.Name,
 		Email: req.Email,
 	})
@@ -48,7 +51,7 @@ func (h *Handler) CreateUser(c *gin.Context) {
 	response.Success(c, http.StatusCreated, "user created successfully", user)
 }
 
-func (h *Handler) GetUserByID(c *gin.Context) {
+func (h *UserHandler) GetUserByID(c *gin.Context) {
 	userID, err := strconv.ParseInt(c.Param("userID"), 10, 64)
 	if err != nil {
 		response.Error(c, http.StatusBadRequest, "invalid id", err)
@@ -69,14 +72,14 @@ func (h *Handler) GetUserByID(c *gin.Context) {
 	response.Success(c, http.StatusOK, "user retrieved successfully", user)
 }
 
-func (h *Handler) GetUserList(c *gin.Context) {
-	var req GetUserListRequest
+func (h *UserHandler) GetUserList(c *gin.Context) {
+	var req dto.GetUserListRequest
 	if err := c.ShouldBindQuery(&req); err != nil {
 		response.Error(c, http.StatusBadRequest, "invalid request", err)
 		return
 	}
 
-	users, total, err := h.service.GetUserList(c.Request.Context(), UserListFilter{
+	users, total, err := h.service.GetUserList(c.Request.Context(), dto.UserListFilter{
 		Name:   req.Name,
 		Limit:  req.GetLimit(),
 		Offset: req.GetOffset(),
@@ -87,20 +90,20 @@ func (h *Handler) GetUserList(c *gin.Context) {
 	}
 
 	req.Pagination.SetTotal(total)
-	response.Success(c, http.StatusOK, "users retrieved successfully", &UserListResponse{
+	response.Success(c, http.StatusOK, "users retrieved successfully", &dto.UserListResponse{
 		Users:      users,
 		Pagination: req.Pagination,
 	})
 }
 
-func (h *Handler) UpdateUser(c *gin.Context) {
+func (h *UserHandler) UpdateUser(c *gin.Context) {
 	userID, err := strconv.ParseInt(c.Param("userID"), 10, 64)
 	if err != nil {
 		response.Error(c, http.StatusBadRequest, "invalid id", err)
 		return
 	}
 
-	var req UpdateUserRequest
+	var req dto.UpdateUserRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.Error(c, http.StatusBadRequest, "invalid request", err)
 		return
@@ -119,7 +122,7 @@ func (h *Handler) UpdateUser(c *gin.Context) {
 	}
 
 	// Update user
-	user, err := h.service.UpdateUser(c.Request.Context(), &User{
+	user, err := h.service.UpdateUser(c.Request.Context(), &model.User{
 		ID:    userID,
 		Name:  req.Name,
 		Email: req.Email,
@@ -132,7 +135,7 @@ func (h *Handler) UpdateUser(c *gin.Context) {
 	response.Success(c, http.StatusOK, "user updated successfully", user)
 }
 
-func (h *Handler) DeleteUser(c *gin.Context) {
+func (h *UserHandler) DeleteUser(c *gin.Context) {
 	userID, err := strconv.ParseInt(c.Param("userID"), 10, 64)
 	if err != nil {
 		response.Error(c, http.StatusBadRequest, "invalid id", err)

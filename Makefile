@@ -14,6 +14,11 @@ LDFLAGS := -s -w
 help: ## Show this help message
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
+# GraphQL targets
+.PHONY: gqlgen
+gqlgen: ## Generate GraphQL code
+	@go tool gqlgen generate
+
 # Development targets
 .PHONY: dev
 dev: ## Start development server with hot reload

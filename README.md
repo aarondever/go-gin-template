@@ -86,7 +86,7 @@ This project uses GORM for database operations and migrations. Database migratio
 
 ### How Migrations Work
 
-- Migrations are defined in your domain models (e.g., `internal/domain/user/user.go`)
+- Migrations are defined in your domain models (e.g., `internal/user.go`)
 - When a repository is created, it automatically calls `AutoMigrate` on the model
 - GORM will create or update tables based on your model definitions
 - No manual migration commands are needed

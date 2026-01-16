@@ -1,0 +1,41 @@
+scalar Int64
+
+type User {
+  id: Int64!
+  name: String!
+  email: String
+  createdAt: String!
+  updatedAt: String!
+}
+
+type UserConnection {
+  users: [User!]!
+  total: Int64!
+}
+
+input CreateUserInput {
+  name: String!
+  email: String
+}
+
+input UpdateUserInput {
+  name: String
+  email: String
+}
+
+input UserListInput {
+  name: String
+  limit: Int
+  offset: Int
+}
+
+type Query {
+  user(id: Int64!): User
+  users(input: UserListInput): UserConnection!
+}
+
+type Mutation {
+  createUser(input: CreateUserInput!): User!
+  updateUser(id: Int64!, input: UpdateUserInput!): User!
+  deleteUser(id: Int64!): Boolean!
+}

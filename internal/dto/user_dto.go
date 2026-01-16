@@ -1,6 +1,9 @@
-package user
+package dto
 
-import "github.com/aarondever/go-gin-template/pkg/pagination"
+import (
+	"github.com/aarondever/go-gin-template/internal/model"
+	"github.com/aarondever/go-gin-template/pkg/pagination"
+)
 
 type CreateUserRequest struct {
 	Name  string  `json:"name" binding:"required"`
@@ -18,7 +21,7 @@ type GetUserListRequest struct {
 }
 
 type UserListResponse struct {
-	Users []*User `json:"users"`
+	Users []*model.User `json:"users"`
 	pagination.Pagination
 }
 
