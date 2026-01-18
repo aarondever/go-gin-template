@@ -76,3 +76,4 @@ docker: docker-clean docker-build docker-up ## Clean, build and start Docker dev
 .PHONY: install-deps
 install-deps: ## Install development dependencies
 	@go install github.com/air-verse/air@latest
+	@go get -tool github.com/99designs/gqlgen
