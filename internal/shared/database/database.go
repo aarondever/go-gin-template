@@ -18,18 +18,23 @@ type Database struct {
 	Redis *redis.Client
 }
 
-func New(dbCfg config.DatabaseConfig, redisCfg config.RedisConfig, s *slog.Logger) (*Database, error) {
+func New(cfg *config.Config, s *slog.Logger) (*Database, error) {
 	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
-		dbCfg.Host,
-		dbCfg.Port,
-		dbCfg.Username,
-		dbCfg.Password,
-		dbCfg.Database,
+		cfg.Database.Host,
+		cfg.Database.Port,
+		cfg.Database.Username,
+		cfg.Database.Password,
+		cfg.Database.Database,
 	)
+
+	logLevel := logger.Warn
+	if cfg.Server.Mode == "debug" {
+		logLevel = logger.Info
+	}
 
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
 		Logger: logger.NewSlogLogger(s, logger.Config{
-			LogLevel: logger.Warn,
+			LogLevel: logLevel,
 		}),
 	})
 	if err != nil {
@@ -43,9 +48,9 @@ func New(dbCfg config.DatabaseConfig, redisCfg config.RedisConfig, s *slog.Logge
 	}
 
 	// Connection pool settings
-	sqlDB.SetMaxOpenConns(dbCfg.MaxOpenConns)
-	sqlDB.SetMaxIdleConns(dbCfg.MaxIdleConns)
-	sqlDB.SetConnMaxLifetime(time.Duration(dbCfg.ConnMaxLifetime) * time.Second)
+	sqlDB.SetMaxOpenConns(cfg.Database.MaxOpenConns)
+	sqlDB.SetMaxIdleConns(cfg.Database.MaxIdleConns)
+	sqlDB.SetConnMaxLifetime(time.Duration(cfg.Database.ConnMaxLifetime) * time.Second)
 
 	// Test connection
 	if err := sqlDB.Ping(); err != nil {
@@ -54,9 +59,9 @@ func New(dbCfg config.DatabaseConfig, redisCfg config.RedisConfig, s *slog.Logge
 
 	// Initialize Redis client
 	rdb := redis.NewClient(&redis.Options{
-		Addr:     fmt.Sprintf("%s:%s", redisCfg.Host, redisCfg.Port),
-		Password: redisCfg.Password,
-		DB:       redisCfg.DB,
+		Addr:     fmt.Sprintf("%s:%s", cfg.Redis.Host, cfg.Redis.Port),
+		Password: cfg.Redis.Password,
+		DB:       cfg.Redis.DB,
 	})
 
 	// Test Redis connection
