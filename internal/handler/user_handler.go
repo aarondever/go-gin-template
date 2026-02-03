@@ -6,9 +6,9 @@ import (
 	"strconv"
 
 	"github.com/aarondever/go-gin-template/internal/dto"
+	e "github.com/aarondever/go-gin-template/internal/errors"
 	"github.com/aarondever/go-gin-template/internal/model"
 	"github.com/aarondever/go-gin-template/internal/service"
-	e "github.com/aarondever/go-gin-template/internal/shared/errors"
 	"github.com/aarondever/go-gin-template/pkg/response"
 	"github.com/gin-gonic/gin"
 )

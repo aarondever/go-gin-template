@@ -11,10 +11,11 @@ type CreateUserRequest struct {
 }
 
 type UpdateUserRequest struct {
-	Name  string  `json:"name" binding:"omitempty"`
+	Name  string  `json:"name"`
 	Email *string `json:"email" binding:"omitempty,email"`
 }
 
+// User List
 type GetUserListRequest struct {
 	Name string `form:"name"`
 	pagination.Pagination
@@ -25,7 +26,6 @@ type UserListResponse struct {
 	pagination.Pagination
 }
 
-// Filters
 type UserListFilter struct {
 	Name   string
 	Limit  int

@@ -10,12 +10,12 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/aarondever/go-gin-template/internal/config"
+	"github.com/aarondever/go-gin-template/internal/database"
 	"github.com/aarondever/go-gin-template/internal/handler"
+	"github.com/aarondever/go-gin-template/internal/middleware"
 	"github.com/aarondever/go-gin-template/internal/repository"
 	"github.com/aarondever/go-gin-template/internal/service"
-	"github.com/aarondever/go-gin-template/internal/shared/config"
-	"github.com/aarondever/go-gin-template/internal/shared/database"
-	"github.com/aarondever/go-gin-template/internal/shared/middleware"
 	"github.com/aarondever/go-gin-template/pkg/logger"
 	"github.com/gin-gonic/gin"
 )

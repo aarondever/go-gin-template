@@ -6,7 +6,7 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/aarondever/go-gin-template/internal/shared/config"
+	"github.com/aarondever/go-gin-template/internal/config"
 	"github.com/redis/go-redis/v9"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"

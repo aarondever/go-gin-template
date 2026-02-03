@@ -3,11 +3,11 @@ package service
 import (
 	"context"
 
+	"github.com/aarondever/go-gin-template/internal/database"
 	"github.com/aarondever/go-gin-template/internal/dto"
+	e "github.com/aarondever/go-gin-template/internal/errors"
 	"github.com/aarondever/go-gin-template/internal/model"
 	"github.com/aarondever/go-gin-template/internal/repository"
-	"github.com/aarondever/go-gin-template/internal/shared/database"
-	e "github.com/aarondever/go-gin-template/internal/shared/errors"
 	"github.com/aarondever/go-gin-template/pkg/logger"
 )
 

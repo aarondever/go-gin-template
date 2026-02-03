@@ -5,9 +5,9 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/aarondever/go-gin-template/internal/database"
 	"github.com/aarondever/go-gin-template/internal/dto"
 	"github.com/aarondever/go-gin-template/internal/model"
-	"github.com/aarondever/go-gin-template/internal/shared/database"
 	"gorm.io/gorm"
 )
 
