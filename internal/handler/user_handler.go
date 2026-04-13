@@ -14,11 +14,11 @@ import (
 )
 
 type UserHandler struct {
-	service service.UserService
+	svc service.UserService
 }
 
 func NewUserHandler(svc service.UserService) *UserHandler {
-	return &UserHandler{service: svc}
+	return &UserHandler{svc: svc}
 }
 
 func (h *UserHandler) RegisterRoutes(router *gin.RouterGroup) {
@@ -39,7 +39,7 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 		return
 	}
 
-	user, err := h.service.CreateUser(c.Request.Context(), &model.User{
+	user, err := h.svc.CreateUser(c.Request.Context(), &model.User{
 		Name:  req.Name,
 		Email: req.Email,
 	})
@@ -58,7 +58,7 @@ func (h *UserHandler) GetUserByID(c *gin.Context) {
 		return
 	}
 
-	user, err := h.service.GetUserByID(c.Request.Context(), userID)
+	user, err := h.svc.GetUserByID(c.Request.Context(), userID)
 	if err != nil {
 		if errors.Is(err, e.ErrNotFound) {
 			response.Error(c, http.StatusNotFound, "user not found", err)
@@ -79,7 +79,7 @@ func (h *UserHandler) GetUserList(c *gin.Context) {
 		return
 	}
 
-	users, total, err := h.service.GetUserList(c.Request.Context(), dto.UserListFilter{
+	users, total, err := h.svc.GetUserList(c.Request.Context(), dto.UserListFilter{
 		Name:   req.Name,
 		Limit:  req.GetLimit(),
 		Offset: req.GetOffset(),
@@ -110,7 +110,7 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 	}
 
 	// Check if user exists
-	_, err = h.service.GetUserByID(c.Request.Context(), userID)
+	_, err = h.svc.GetUserByID(c.Request.Context(), userID)
 	if err != nil {
 		if errors.Is(err, e.ErrNotFound) {
 			response.Error(c, http.StatusNotFound, "user not found", err)
@@ -122,7 +122,7 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 	}
 
 	// Update user
-	user, err := h.service.UpdateUser(c.Request.Context(), &model.User{
+	user, err := h.svc.UpdateUser(c.Request.Context(), &model.User{
 		ID:    userID,
 		Name:  req.Name,
 		Email: req.Email,
@@ -143,7 +143,7 @@ func (h *UserHandler) DeleteUser(c *gin.Context) {
 	}
 
 	// Check if user exists
-	_, err = h.service.GetUserByID(c.Request.Context(), userID)
+	_, err = h.svc.GetUserByID(c.Request.Context(), userID)
 	if err != nil {
 		if errors.Is(err, e.ErrNotFound) {
 			response.Error(c, http.StatusNotFound, "user not found", err)
@@ -155,7 +155,7 @@ func (h *UserHandler) DeleteUser(c *gin.Context) {
 	}
 
 	// Delete user
-	if err := h.service.DeleteUser(c.Request.Context(), userID); err != nil {
+	if err := h.svc.DeleteUser(c.Request.Context(), userID); err != nil {
 		response.Error(c, http.StatusInternalServerError, "failed to delete user", err)
 		return
 	}

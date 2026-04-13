@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 
-	"github.com/aarondever/go-gin-template/internal/database"
 	"github.com/aarondever/go-gin-template/internal/dto"
 	e "github.com/aarondever/go-gin-template/internal/errors"
 	"github.com/aarondever/go-gin-template/internal/model"
@@ -21,15 +20,14 @@ type UserService interface {
 
 type userService struct {
 	repo repository.UserRepository
-	db   *database.Database
 }
 
-func NewUserService(repo repository.UserRepository, db *database.Database) UserService {
-	return &userService{repo: repo, db: db}
+func NewUserService(repo repository.UserRepository) UserService {
+	return &userService{repo: repo}
 }
 
 func (s *userService) CreateUser(ctx context.Context, user *model.User) (*model.User, error) {
-	if err := s.repo.CreateUser(ctx, s.db.DB, user); err != nil {
+	if err := s.repo.CreateUser(ctx, user); err != nil {
 		logger.Error("failed to create user", "error", err)
 		return nil, err
 	}
@@ -63,7 +61,7 @@ func (s *userService) GetUserList(ctx context.Context, filters dto.UserListFilte
 }
 
 func (s *userService) UpdateUser(ctx context.Context, user *model.User) (*model.User, error) {
-	if err := s.repo.UpdateUser(ctx, s.db.DB, user); err != nil {
+	if err := s.repo.UpdateUser(ctx, user); err != nil {
 		logger.Error("failed to update user", "error", err)
 		return nil, err
 	}
@@ -72,7 +70,7 @@ func (s *userService) UpdateUser(ctx context.Context, user *model.User) (*model.
 }
 
 func (s *userService) DeleteUser(ctx context.Context, userID int64) error {
-	if err := s.repo.DeleteUser(ctx, s.db.DB, userID); err != nil {
+	if err := s.repo.DeleteUser(ctx, userID); err != nil {
 		logger.Error("failed to delete user", "error", err)
 		return err
 	}

@@ -37,13 +37,11 @@ func main() {
 	}
 	defer db.Close()
 
-	logger.Info("Database connected successfully")
-
 	// Initialize repositories
-	userRepo := repository.NewUserRepository(db)
+	userRepo := repository.NewUserRepository(db.DB())
 
 	// Initialize services
-	userService := service.NewUserService(userRepo, db)
+	userService := service.NewUserService(userRepo)
 
 	// Initialize handlers
 	userHandler := handler.NewUserHandler(userService)

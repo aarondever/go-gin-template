@@ -1,21 +1,18 @@
 package database
 
 import (
-	"context"
 	"fmt"
 	"log/slog"
 	"time"
 
 	"github.com/aarondever/go-gin-template/internal/config"
-	"github.com/redis/go-redis/v9"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
 
 type Database struct {
-	*gorm.DB
-	Redis *redis.Client
+	db *gorm.DB
 }
 
 func New(cfg *config.Config, s *slog.Logger) (*Database, error) {
@@ -57,49 +54,19 @@ func New(cfg *config.Config, s *slog.Logger) (*Database, error) {
 		return nil, fmt.Errorf("failed to ping database: %w", err)
 	}
 
-	// Initialize Redis client
-	rdb := redis.NewClient(&redis.Options{
-		Addr:     fmt.Sprintf("%s:%s", cfg.Redis.Host, cfg.Redis.Port),
-		Password: cfg.Redis.Password,
-		DB:       cfg.Redis.DB,
-	})
-
-	// Test Redis connection
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	if err := rdb.Ping(ctx).Err(); err != nil {
-		return nil, fmt.Errorf("failed to connect to redis: %w", err)
-	}
-
-	return &Database{
-		DB:    db,
-		Redis: rdb,
-	}, nil
+	return &Database{db: db}, nil
 }
 
 func (d *Database) Close() error {
-	var errs []error
-
-	// Close PostgreSQL connection
-	sqlDB, err := d.DB.DB()
+	// Close Database connection
+	sqlDB, err := d.db.DB()
 	if err != nil {
-		errs = append(errs, fmt.Errorf("failed to get underlying sql.DB: %w", err))
-	} else {
-		if err := sqlDB.Close(); err != nil {
-			errs = append(errs, fmt.Errorf("failed to close database: %w", err))
-		}
+		return fmt.Errorf("failed to get underlying sql.DB: %w", err)
 	}
 
-	// Close Redis connection
-	if d.Redis != nil {
-		if err := d.Redis.Close(); err != nil {
-			errs = append(errs, fmt.Errorf("failed to close redis: %w", err))
-		}
-	}
+	return sqlDB.Close()
+}
 
-	if len(errs) > 0 {
-		return fmt.Errorf("errors closing connections: %v", errs)
-	}
-
-	return nil
+func (d *Database) DB() *gorm.DB {
+	return d.db
 }
