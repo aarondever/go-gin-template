@@ -1,10 +1,9 @@
 package pagination
 
 type Pagination struct {
-	Page       int   `json:"page" form:"page"`
-	PageSize   int   `json:"page_size" form:"page_size"`
-	Total      int64 `json:"total" binding:"-"`
-	TotalPages int   `json:"total_pages" binding:"-"`
+	Page     int   `json:"page" form:"page"`
+	PageSize int   `json:"page_size" form:"page_size"`
+	Total    int64 `json:"total" binding:"-"`
 }
 
 func (p *Pagination) GetLimit() int {
@@ -23,10 +22,4 @@ func (p *Pagination) GetOffset() int {
 	}
 
 	return (p.Page - 1) * p.GetLimit()
-}
-
-func (p *Pagination) SetTotal(total int64) {
-	p.Total = total
-	limit := p.GetLimit()
-	p.TotalPages = int((total + int64(limit) - 1) / int64(limit))
 }

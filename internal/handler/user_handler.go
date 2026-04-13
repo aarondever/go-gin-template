@@ -89,7 +89,7 @@ func (h *UserHandler) GetUserList(c *gin.Context) {
 		return
 	}
 
-	req.Pagination.SetTotal(total)
+	req.Pagination.Total = total
 	response.Success(c, http.StatusOK, "users retrieved successfully", &dto.UserListResponse{
 		Users:      users,
 		Pagination: req.Pagination,
