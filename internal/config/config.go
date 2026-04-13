@@ -10,7 +10,6 @@ import (
 type Config struct {
 	Server   ServerConfig
 	Database DatabaseConfig
-	Redis    RedisConfig
 	Log      LogConfig
 }
 
@@ -30,13 +29,6 @@ type DatabaseConfig struct {
 	MaxOpenConns    int
 	MaxIdleConns    int
 	ConnMaxLifetime int
-}
-
-type RedisConfig struct {
-	Host     string
-	Port     string
-	Password string
-	DB       int
 }
 
 type LogConfig struct {
@@ -64,12 +56,6 @@ func Load() (*Config, error) {
 			MaxOpenConns:    getIntEnv("DB_MAX_OPEN_CONNS", 25),
 			MaxIdleConns:    getIntEnv("DB_MAX_IDLE_CONNS", 5),
 			ConnMaxLifetime: getIntEnv("DB_CONN_MAX_LIFETIME", 300),
-		},
-		Redis: RedisConfig{
-			Host:     getStringEnv("REDIS_HOST", "localhost"),
-			Port:     getStringEnv("REDIS_PORT", "6379"),
-			Password: getStringEnv("REDIS_PASSWORD", ""),
-			DB:       getIntEnv("REDIS_DB", 0),
 		},
 		Log: LogConfig{
 			Level:  getStringEnv("LOG_LEVEL", "info"),
