@@ -3,8 +3,8 @@ package repository
 import (
 	"context"
 	"errors"
-	"fmt"
 
+	"github.com/aarondever/go-gin-template/internal/database"
 	"github.com/aarondever/go-gin-template/internal/dto"
 	"github.com/aarondever/go-gin-template/internal/model"
 	"gorm.io/gorm"
@@ -27,22 +27,18 @@ func NewUserRepository(db *gorm.DB) UserRepository {
 }
 
 func (r *userRepository) CreateUser(ctx context.Context, user *model.User) error {
-	if err := r.db.WithContext(ctx).Create(user).Error; err != nil {
-		return fmt.Errorf("failed to create user: %w", err)
-	}
-
-	return nil
+	return database.ExtractTx(ctx, r.db).WithContext(ctx).Create(user).Error
 }
 
 func (r *userRepository) GetUserByID(ctx context.Context, userID int64) (*model.User, error) {
 	var user model.User
-	err := r.db.WithContext(ctx).Take(&user, userID).Error
+	err := database.ExtractTx(ctx, r.db).WithContext(ctx).Take(&user, userID).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}
 
-		return nil, fmt.Errorf("failed to get user by id: %w", err)
+		return nil, err
 	}
 
 	return &user, nil
@@ -52,7 +48,7 @@ func (r *userRepository) GetUserList(ctx context.Context, filter dto.UserListFil
 	var users []*model.User
 	var total int64
 
-	query := r.db.WithContext(ctx).
+	query := database.ExtractTx(ctx, r.db).WithContext(ctx).
 		Model(&model.User{}).
 		Limit(filter.Limit).
 		Offset(filter.Offset)
@@ -62,28 +58,20 @@ func (r *userRepository) GetUserList(ctx context.Context, filter dto.UserListFil
 	}
 
 	if err := query.Count(&total).Error; err != nil {
-		return nil, 0, fmt.Errorf("failed to count users: %w", err)
+		return nil, 0, err
 	}
 
 	if err := query.Find(&users).Error; err != nil {
-		return nil, 0, fmt.Errorf("failed to find users: %w", err)
+		return nil, 0, err
 	}
 
 	return users, total, nil
 }
 
 func (r *userRepository) UpdateUser(ctx context.Context, user *model.User) error {
-	if err := r.db.WithContext(ctx).Updates(user).Error; err != nil {
-		return fmt.Errorf("failed to update user: %w", err)
-	}
-
-	return nil
+	return database.ExtractTx(ctx, r.db).WithContext(ctx).Updates(user).Error
 }
 
 func (r *userRepository) DeleteUser(ctx context.Context, userID int64) error {
-	if err := r.db.WithContext(ctx).Delete(&model.User{}, userID).Error; err != nil {
-		return fmt.Errorf("failed to delete user: %w", err)
-	}
-
-	return nil
+	return database.ExtractTx(ctx, r.db).WithContext(ctx).Delete(&model.User{}, userID).Error
 }
