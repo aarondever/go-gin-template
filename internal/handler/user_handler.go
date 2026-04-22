@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"strconv"
 
+	e "github.com/aarondever/go-gin-template/errors"
 	"github.com/aarondever/go-gin-template/internal/dto"
-	e "github.com/aarondever/go-gin-template/internal/errors"
 	"github.com/aarondever/go-gin-template/internal/model"
 	"github.com/aarondever/go-gin-template/internal/service"
 	"github.com/aarondever/go-gin-template/pkg/response"
@@ -79,7 +79,7 @@ func (h *UserHandler) GetUserList(c *gin.Context) {
 		return
 	}
 
-	users, total, err := h.svc.GetUserList(c.Request.Context(), dto.UserListFilter{
+	users, total, err := h.svc.GetUserList(c.Request.Context(), &dto.UserListFilter{
 		Name:   req.Name,
 		Limit:  req.GetLimit(),
 		Offset: req.GetOffset(),
@@ -109,18 +109,6 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 		return
 	}
 
-	// Check if user exists
-	_, err = h.svc.GetUserByID(c.Request.Context(), userID)
-	if err != nil {
-		if errors.Is(err, e.ErrNotFound) {
-			response.Error(c, http.StatusNotFound, "user not found", err)
-			return
-		}
-
-		response.Error(c, http.StatusInternalServerError, "failed to get user", err)
-		return
-	}
-
 	// Update user
 	user, err := h.svc.UpdateUser(c.Request.Context(), &model.User{
 		ID:    userID,
@@ -128,6 +116,11 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 		Email: req.Email,
 	})
 	if err != nil {
+		if errors.Is(err, e.ErrNotFound) {
+			response.Error(c, http.StatusNotFound, "user not found", err)
+			return
+		}
+
 		response.Error(c, http.StatusInternalServerError, "failed to update user", err)
 		return
 	}

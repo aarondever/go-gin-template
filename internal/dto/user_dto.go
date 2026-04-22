@@ -17,7 +17,8 @@ type UpdateUserRequest struct {
 
 // User List
 type GetUserListRequest struct {
-	Name string `form:"name"`
+	Name  string `form:"name"`
+	Email string `form:"email"`
 	pagination.Pagination
 }
 
@@ -28,6 +29,7 @@ type UserListResponse struct {
 
 type UserListFilter struct {
 	Name   string
+	Email  string
 	Limit  int
 	Offset int
 }
