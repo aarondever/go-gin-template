@@ -16,20 +16,12 @@ type Database struct {
 }
 
 func New(cfg *config.Config, s *slog.Logger) (*Database, error) {
-	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
-		cfg.Database.Host,
-		cfg.Database.Port,
-		cfg.Database.Username,
-		cfg.Database.Password,
-		cfg.Database.Database,
-	)
-
 	logLevel := logger.Warn
 	if cfg.Server.Mode == "debug" {
 		logLevel = logger.Info
 	}
 
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
+	db, err := gorm.Open(postgres.Open(cfg.Database.DSN), &gorm.Config{
 		Logger: logger.NewSlogLogger(s, logger.Config{
 			LogLevel: logLevel,
 		}),

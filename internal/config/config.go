@@ -21,11 +21,7 @@ type ServerConfig struct {
 }
 
 type DatabaseConfig struct {
-	Host            string
-	Port            string
-	Username        string
-	Password        string
-	Database        string
+	DSN             string
 	MaxOpenConns    int
 	MaxIdleConns    int
 	ConnMaxLifetime int
@@ -48,11 +44,7 @@ func Load() (*Config, error) {
 			WriteTimeout: getIntEnv("SERVER_WRITE_TIMEOUT", 30),
 		},
 		Database: DatabaseConfig{
-			Host:            getStringEnv("DB_HOST", "localhost"),
-			Port:            getStringEnv("DB_PORT", "5432"),
-			Username:        getStringEnv("DB_USERNAME", "postgres"),
-			Password:        getStringEnv("DB_PASSWORD", "postgres"),
-			Database:        getStringEnv("DB_DATABASE", "postgres"),
+			DSN:             getStringEnv("DB_DSN", "host=localhost port=5432 user=postgres password=postgres dbname=postgres sslmode=disable"),
 			MaxOpenConns:    getIntEnv("DB_MAX_OPEN_CONNS", 25),
 			MaxIdleConns:    getIntEnv("DB_MAX_IDLE_CONNS", 5),
 			ConnMaxLifetime: getIntEnv("DB_CONN_MAX_LIFETIME", 300),
