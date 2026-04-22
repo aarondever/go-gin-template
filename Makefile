@@ -38,6 +38,46 @@ test-coverage: ## Run tests with coverage
 test-race: ## Run tests with race detection
 	@go test -v -race ./...
 
+# Migration targets
+MIGRATE_CMD := go run ./cmd/cli
+
+.PHONY: migrate-up
+migrate-up: ## Apply all pending migrations
+	@$(MIGRATE_CMD) up
+
+.PHONY: migrate-up-by-one
+migrate-up-by-one: ## Apply the next pending migration
+	@$(MIGRATE_CMD) up-by-one
+
+.PHONY: migrate-down
+migrate-down: ## Roll back the most recent migration
+	@$(MIGRATE_CMD) down
+
+.PHONY: migrate-redo
+migrate-redo: ## Re-run the latest migration
+	@$(MIGRATE_CMD) redo
+
+.PHONY: migrate-reset
+migrate-reset: ## Roll back all migrations
+	@$(MIGRATE_CMD) reset
+
+.PHONY: migrate-status
+migrate-status: ## Show migration status
+	@$(MIGRATE_CMD) status
+
+.PHONY: migrate-version
+migrate-version: ## Print the current DB migration version
+	@$(MIGRATE_CMD) version
+
+.PHONY: migrate-create
+migrate-create: ## Create a new SQL migration (usage: make migrate-create name=add_users)
+	@test -n "$(name)" || (echo "error: name is required (usage: make migrate-create name=add_users)" && exit 1)
+	@$(MIGRATE_CMD) create $(name) sql
+
+.PHONY: migrate-fix
+migrate-fix: ## Apply sequential ordering to migrations
+	@$(MIGRATE_CMD) fix
+
 # Cleaning targets
 .PHONY: clean
 clean: ## Clean build artifacts
@@ -71,3 +111,4 @@ docker: docker-clean docker-build docker-up ## Clean, build and start Docker dev
 .PHONY: install-deps
 install-deps: ## Install development dependencies
 	@go install github.com/air-verse/air@latest
+	@go install github.com/pressly/goose/v3/cmd/goose@latest
