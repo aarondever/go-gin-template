@@ -10,7 +10,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/aarondever/go-gin-template/internal/config"
+	"github.com/aarondever/go-gin-template/config"
 	"github.com/aarondever/go-gin-template/internal/database"
 	"github.com/aarondever/go-gin-template/internal/handler"
 	"github.com/aarondever/go-gin-template/internal/middleware"
@@ -36,6 +36,11 @@ func main() {
 		logger.Fatal("Failed to connect to database", "error", err)
 	}
 	defer db.Close()
+
+	// Run database migrations
+	if err := database.RunMigrations(db.DB()); err != nil {
+		logger.Fatal("Failed to run database migrations", "error", err)
+	}
 
 	// Initialize repositories
 	userRepo := repository.NewUserRepository(db.DB())

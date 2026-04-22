@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/aarondever/go-gin-template/internal/config"
+	"github.com/aarondever/go-gin-template/config"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
