@@ -37,9 +37,11 @@ func main() {
 	}
 	defer db.Close()
 
-	// Run database migrations
-	if err := database.RunMigrations(db.DB()); err != nil {
-		logger.Fatal("Failed to run database migrations", "error", err)
+	if cfg.Database.RunMigrations {
+		// Run database migrations
+		if err := database.RunMigrations(db.DB()); err != nil {
+			logger.Fatal("Failed to run database migrations", "error", err)
+		}
 	}
 
 	// Initialize repositories
@@ -52,7 +54,7 @@ func main() {
 	userHandler := handler.NewUserHandler(userService)
 
 	// Setup router
-	gin.SetMode(gin.ReleaseMode)
+	gin.SetMode(cfg.Server.Mode)
 	r := gin.New()
 
 	// Global middleware

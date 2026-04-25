@@ -25,6 +25,7 @@ type DatabaseConfig struct {
 	MaxOpenConns    int
 	MaxIdleConns    int
 	ConnMaxLifetime int
+	RunMigrations   bool
 }
 
 type LogConfig struct {
@@ -48,6 +49,7 @@ func Load() (*Config, error) {
 			MaxOpenConns:    getIntEnv("DB_MAX_OPEN_CONNS", 25),
 			MaxIdleConns:    getIntEnv("DB_MAX_IDLE_CONNS", 5),
 			ConnMaxLifetime: getIntEnv("DB_CONN_MAX_LIFETIME", 300),
+			RunMigrations:   getBoolEnv("DB_RUN_MIGRATIONS", true),
 		},
 		Log: LogConfig{
 			Level:  getStringEnv("LOG_LEVEL", "info"),
@@ -73,6 +75,20 @@ func getIntEnv(key string, defaultValue int) int {
 	}
 
 	value, err := strconv.Atoi(valueStr)
+	if err != nil {
+		return defaultValue
+	}
+
+	return value
+}
+
+func getBoolEnv(key string, defaultValue bool) bool {
+	valueStr := os.Getenv(key)
+	if valueStr == "" {
+		return defaultValue
+	}
+
+	value, err := strconv.ParseBool(valueStr)
 	if err != nil {
 		return defaultValue
 	}
