@@ -6,20 +6,23 @@ type Pagination struct {
 	Total    int64 `json:"total" binding:"-"`
 }
 
-func (p *Pagination) GetLimit() int {
-	if p.PageSize <= 0 {
-		p.PageSize = 10
-	} else if p.PageSize > 1000 {
-		p.PageSize = 1000
-	}
+func (p *Pagination) GetOffset() int {
+	return (p.GetPage() - 1) * p.GetLimit()
+}
 
+func (p *Pagination) GetLimit() int {
+	switch {
+	case p.PageSize > 100:
+		p.PageSize = 100
+	case p.PageSize <= 0:
+		p.PageSize = 10
+	}
 	return p.PageSize
 }
 
-func (p *Pagination) GetOffset() int {
+func (p *Pagination) GetPage() int {
 	if p.Page <= 0 {
-		p.Page = 1 // Default to page 1
+		p.Page = 1
 	}
-
-	return (p.Page - 1) * p.GetLimit()
+	return p.Page
 }

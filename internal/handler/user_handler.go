@@ -6,12 +6,34 @@ import (
 	"strconv"
 
 	e "github.com/aarondever/go-gin-template/errors"
-	"github.com/aarondever/go-gin-template/internal/dto"
 	"github.com/aarondever/go-gin-template/internal/model"
+	"github.com/aarondever/go-gin-template/internal/repository"
 	"github.com/aarondever/go-gin-template/internal/service"
+	"github.com/aarondever/go-gin-template/pkg/pagination"
 	"github.com/aarondever/go-gin-template/pkg/response"
 	"github.com/gin-gonic/gin"
 )
+
+type createUserRequest struct {
+	Name  string  `json:"name" binding:"required"`
+	Email *string `json:"email" binding:"omitzero,email"`
+}
+
+type updateUserRequest struct {
+	Name  string  `json:"name"`
+	Email *string `json:"email" binding:"omitzero,email"`
+}
+
+type getUserListRequest struct {
+	Name  string `form:"name"`
+	Email string `form:"email"`
+	pagination.Pagination
+}
+
+type userListResponse struct {
+	Users []*model.User `json:"users"`
+	pagination.Pagination
+}
 
 type UserHandler struct {
 	svc service.UserService
@@ -33,7 +55,7 @@ func (h *UserHandler) RegisterRoutes(router *gin.RouterGroup) {
 }
 
 func (h *UserHandler) CreateUser(c *gin.Context) {
-	var req dto.CreateUserRequest
+	var req createUserRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.Error(c, http.StatusBadRequest, "invalid request", err)
 		return
@@ -44,6 +66,15 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 		Email: req.Email,
 	})
 	if err != nil {
+		var valErr *e.ValidationError
+		if errors.As(err, &valErr) {
+			response.Error(c, http.StatusBadRequest, "validation failed", valErr.Err)
+			return
+		}
+		if errors.Is(err, e.ErrConflict) {
+			response.Error(c, http.StatusConflict, "user already exists", err)
+			return
+		}
 		response.Error(c, http.StatusInternalServerError, "failed to create user", err)
 		return
 	}
@@ -64,7 +95,6 @@ func (h *UserHandler) GetUserByID(c *gin.Context) {
 			response.Error(c, http.StatusNotFound, "user not found", err)
 			return
 		}
-
 		response.Error(c, http.StatusInternalServerError, "failed to get user", err)
 		return
 	}
@@ -73,24 +103,28 @@ func (h *UserHandler) GetUserByID(c *gin.Context) {
 }
 
 func (h *UserHandler) GetUserList(c *gin.Context) {
-	var req dto.GetUserListRequest
+	var req getUserListRequest
 	if err := c.ShouldBindQuery(&req); err != nil {
 		response.Error(c, http.StatusBadRequest, "invalid request", err)
 		return
 	}
 
-	users, total, err := h.svc.GetUserList(c.Request.Context(), &dto.UserListFilter{
-		Name:   req.Name,
-		Limit:  req.GetLimit(),
-		Offset: req.GetOffset(),
+	users, err := h.svc.GetUserList(c.Request.Context(), repository.UserListQuery{
+		Name:       req.Name,
+		Email:      req.Email,
+		Pagination: &req.Pagination,
 	})
 	if err != nil {
+		var valErr *e.ValidationError
+		if errors.As(err, &valErr) {
+			response.Error(c, http.StatusBadRequest, "validation failed", valErr.Err)
+			return
+		}
 		response.Error(c, http.StatusInternalServerError, "failed to list users", err)
 		return
 	}
 
-	req.Pagination.Total = total
-	response.Success(c, http.StatusOK, "users retrieved successfully", &dto.UserListResponse{
+	response.Success(c, http.StatusOK, "users retrieved successfully", &userListResponse{
 		Users:      users,
 		Pagination: req.Pagination,
 	})
@@ -103,24 +137,27 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 		return
 	}
 
-	var req dto.UpdateUserRequest
+	var req updateUserRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.Error(c, http.StatusBadRequest, "invalid request", err)
 		return
 	}
 
-	// Update user
 	user, err := h.svc.UpdateUser(c.Request.Context(), &model.User{
 		ID:    userID,
 		Name:  req.Name,
 		Email: req.Email,
 	})
 	if err != nil {
-		if errors.Is(err, e.ErrNotFound) {
-			response.Error(c, http.StatusNotFound, "user not found", err)
+		var valErr *e.ValidationError
+		if errors.As(err, &valErr) {
+			response.Error(c, http.StatusBadRequest, "validation failed", valErr.Err)
 			return
 		}
-
+		if errors.Is(err, e.ErrConflict) {
+			response.Error(c, http.StatusConflict, "user already exists", err)
+			return
+		}
 		response.Error(c, http.StatusInternalServerError, "failed to update user", err)
 		return
 	}
@@ -135,20 +172,11 @@ func (h *UserHandler) DeleteUser(c *gin.Context) {
 		return
 	}
 
-	// Check if user exists
-	_, err = h.svc.GetUserByID(c.Request.Context(), userID)
-	if err != nil {
+	if err := h.svc.DeleteUser(c.Request.Context(), userID); err != nil {
 		if errors.Is(err, e.ErrNotFound) {
 			response.Error(c, http.StatusNotFound, "user not found", err)
 			return
 		}
-
-		response.Error(c, http.StatusInternalServerError, "failed to get user", err)
-		return
-	}
-
-	// Delete user
-	if err := h.svc.DeleteUser(c.Request.Context(), userID); err != nil {
 		response.Error(c, http.StatusInternalServerError, "failed to delete user", err)
 		return
 	}

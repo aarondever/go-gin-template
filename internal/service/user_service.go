@@ -3,7 +3,7 @@ package service
 import (
 	"context"
 
-	"github.com/aarondever/go-gin-template/internal/dto"
+	e "github.com/aarondever/go-gin-template/errors"
 	"github.com/aarondever/go-gin-template/internal/model"
 	"github.com/aarondever/go-gin-template/internal/repository"
 	"github.com/aarondever/go-gin-template/pkg/logger"
@@ -13,7 +13,7 @@ import (
 type UserService interface {
 	CreateUser(ctx context.Context, user *model.User) (*model.User, error)
 	GetUserByID(ctx context.Context, userID int64) (*model.User, error)
-	GetUserList(ctx context.Context, f *dto.UserListFilter) ([]*model.User, int64, error)
+	GetUserList(ctx context.Context, query repository.UserListQuery) ([]*model.User, error)
 	UpdateUser(ctx context.Context, user *model.User) (*model.User, error)
 	DeleteUser(ctx context.Context, userID int64) error
 }
@@ -27,7 +27,10 @@ func NewUserService(repo repository.UserRepository) UserService {
 }
 
 func (s *userService) CreateUser(ctx context.Context, user *model.User) (*model.User, error) {
-	utils.TrimStruct(user)
+	if err := utils.ValidateStruct(user); err != nil {
+		return nil, &e.ValidationError{Err: err}
+	}
+
 	if err := s.repo.CreateUser(ctx, user); err != nil {
 		logger.Error("failed to create user", "error", err)
 		return nil, err
@@ -44,18 +47,24 @@ func (s *userService) GetUserByID(ctx context.Context, userID int64) (*model.Use
 	return user, nil
 }
 
-func (s *userService) GetUserList(ctx context.Context, f *dto.UserListFilter) ([]*model.User, int64, error) {
-	utils.TrimStruct(f)
-	users, total, err := s.repo.GetUserList(ctx, f)
+func (s *userService) GetUserList(ctx context.Context, query repository.UserListQuery) ([]*model.User, error) {
+	if err := utils.ValidateStruct(&query); err != nil {
+		return nil, &e.ValidationError{Err: err}
+	}
+
+	users, err := s.repo.GetUserList(ctx, query)
 	if err != nil {
 		logger.Error("failed to get user list", "error", err)
-		return nil, 0, err
+		return nil, err
 	}
-	return users, total, nil
+	return users, nil
 }
 
 func (s *userService) UpdateUser(ctx context.Context, user *model.User) (*model.User, error) {
-	utils.TrimStruct(user)
+	if err := utils.ValidateStruct(user, "Name"); err != nil {
+		return nil, &e.ValidationError{Err: err}
+	}
+
 	if err := s.repo.UpdateUser(ctx, user); err != nil {
 		logger.Error("failed to update user", "error", err)
 		return nil, err
@@ -64,6 +73,11 @@ func (s *userService) UpdateUser(ctx context.Context, user *model.User) (*model.
 }
 
 func (s *userService) DeleteUser(ctx context.Context, userID int64) error {
+	_, err := s.GetUserByID(ctx, userID)
+	if err != nil {
+		return err
+	}
+
 	if err := s.repo.DeleteUser(ctx, userID); err != nil {
 		logger.Error("failed to delete user", "error", err)
 		return err

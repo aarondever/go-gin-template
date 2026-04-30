@@ -1,19 +1,29 @@
 package utils
 
 import (
+	"fmt"
 	"reflect"
 	"strings"
+
+	"github.com/go-playground/validator/v10"
 )
 
-func TrimStruct(s any) {
+// ValidateStruct trims whitespace on all string fields of s, then validates it
+// using go-playground/validator struct tags. Fields named in the optional
+// exclude list are skipped during validation but are still trimmed.
+// s must be a non-nil pointer to a struct; any other type returns an error.
+// Returns validator.ValidationErrors when one or more fields fail their tag constraints.
+func ValidateStruct(s any, fields ...string) error {
 	v := reflect.ValueOf(s)
 
-	// must be a pointer to a struct
 	if v.Kind() != reflect.Pointer || v.Elem().Kind() != reflect.Struct {
-		return
+		return fmt.Errorf("must be a pointer to a struct")
 	}
 
 	trimValue(v.Elem())
+
+	validate := validator.New()
+	return validate.StructExcept(s, fields...)
 }
 
 func trimValue(v reflect.Value) {

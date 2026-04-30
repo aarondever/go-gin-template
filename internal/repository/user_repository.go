@@ -6,16 +6,22 @@ import (
 
 	e "github.com/aarondever/go-gin-template/errors"
 	"github.com/aarondever/go-gin-template/internal/database"
-	"github.com/aarondever/go-gin-template/internal/dto"
 	"github.com/aarondever/go-gin-template/internal/model"
 	"github.com/aarondever/go-gin-template/pkg/logger"
+	"github.com/aarondever/go-gin-template/pkg/pagination"
 	"gorm.io/gorm"
 )
+
+type UserListQuery struct {
+	Name  string
+	Email string
+	*pagination.Pagination
+}
 
 type UserRepository interface {
 	CreateUser(ctx context.Context, user *model.User) error
 	GetUserByID(ctx context.Context, userID int64) (*model.User, error)
-	GetUserList(ctx context.Context, f *dto.UserListFilter) ([]*model.User, int64, error)
+	GetUserList(ctx context.Context, query UserListQuery) ([]*model.User, error)
 	UpdateUser(ctx context.Context, user *model.User) error
 	DeleteUser(ctx context.Context, userID int64) error
 }
@@ -51,29 +57,19 @@ func (r *userRepository) GetUserByID(ctx context.Context, userID int64) (*model.
 	return &user, nil
 }
 
-func (r *userRepository) GetUserList(ctx context.Context, f *dto.UserListFilter) ([]*model.User, int64, error) {
+func (r *userRepository) GetUserList(ctx context.Context, query UserListQuery) ([]*model.User, error) {
 	var users []*model.User
-	var total int64
-
-	q := database.ExtractTx(ctx, r.db).WithContext(ctx).
-		Model(&model.User{}).
-		Limit(f.Limit).
-		Offset(f.Offset)
-
-	if f.Name != "" {
-		q = q.Where("name LIKE ?", "%"+f.Name+"%")
+	q := database.ExtractTx(ctx, r.db).WithContext(ctx).Scopes(paginate(query.Pagination))
+	if query.Name != "" {
+		q = q.Where("name LIKE ?", "%"+query.Name+"%")
 	}
-	if f.Email != "" {
-		q = q.Where("email = ?", f.Email)
-	}
-	if err := q.Count(&total).Error; err != nil {
-		return nil, 0, err
+	if query.Email != "" {
+		q = q.Where("email = ?", query.Email)
 	}
 	if err := q.Find(&users).Error; err != nil {
-		return nil, 0, err
+		return nil, err
 	}
-
-	return users, total, nil
+	return users, nil
 }
 
 func (r *userRepository) UpdateUser(ctx context.Context, user *model.User) error {
