@@ -7,7 +7,6 @@ import (
 
 	e "github.com/aarondever/go-gin-template/errors"
 	"github.com/aarondever/go-gin-template/internal/model"
-	"github.com/aarondever/go-gin-template/internal/repository"
 	"github.com/aarondever/go-gin-template/internal/service"
 	"github.com/aarondever/go-gin-template/pkg/pagination"
 	"github.com/aarondever/go-gin-template/pkg/response"
@@ -109,10 +108,9 @@ func (h *UserHandler) GetUserList(c *gin.Context) {
 		return
 	}
 
-	users, err := h.svc.GetUserList(c.Request.Context(), repository.UserListQuery{
-		Name:       req.Name,
-		Email:      req.Email,
-		Pagination: &req.Pagination,
+	users, err := h.svc.GetUserList(c.Request.Context(), &req.Pagination, &model.UserListFilter{
+		Name:  req.Name,
+		Email: req.Email,
 	})
 	if err != nil {
 		var valErr *e.ValidationError
@@ -152,6 +150,10 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 		var valErr *e.ValidationError
 		if errors.As(err, &valErr) {
 			response.Error(c, http.StatusBadRequest, "validation failed", valErr.Err)
+			return
+		}
+		if errors.Is(err, e.ErrNotFound) {
+			response.Error(c, http.StatusNotFound, "user not found", err)
 			return
 		}
 		if errors.Is(err, e.ErrConflict) {

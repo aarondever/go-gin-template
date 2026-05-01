@@ -14,3 +14,8 @@ type User struct {
 	UpdatedAt time.Time      `gorm:"column:updated_at" json:"updated_at"`
 	DeletedAt gorm.DeletedAt `gorm:"column:deleted_at;index" json:"-"`
 }
+
+type UserListFilter struct {
+	Name  string
+	Email string `validate:"omitzero,email"`
+}

@@ -7,13 +7,14 @@ import (
 	"github.com/aarondever/go-gin-template/internal/model"
 	"github.com/aarondever/go-gin-template/internal/repository"
 	"github.com/aarondever/go-gin-template/pkg/logger"
+	"github.com/aarondever/go-gin-template/pkg/pagination"
 	"github.com/aarondever/go-gin-template/pkg/utils"
 )
 
 type UserService interface {
 	CreateUser(ctx context.Context, user *model.User) (*model.User, error)
 	GetUserByID(ctx context.Context, userID int64) (*model.User, error)
-	GetUserList(ctx context.Context, query repository.UserListQuery) ([]*model.User, error)
+	GetUserList(ctx context.Context, page *pagination.Pagination, filter *model.UserListFilter) ([]*model.User, error)
 	UpdateUser(ctx context.Context, user *model.User) (*model.User, error)
 	DeleteUser(ctx context.Context, userID int64) error
 }
@@ -47,12 +48,12 @@ func (s *userService) GetUserByID(ctx context.Context, userID int64) (*model.Use
 	return user, nil
 }
 
-func (s *userService) GetUserList(ctx context.Context, query repository.UserListQuery) ([]*model.User, error) {
-	if err := utils.ValidateStruct(&query); err != nil {
+func (s *userService) GetUserList(ctx context.Context, page *pagination.Pagination, filter *model.UserListFilter) ([]*model.User, error) {
+	if err := utils.ValidateStruct(filter); err != nil {
 		return nil, &e.ValidationError{Err: err}
 	}
 
-	users, err := s.repo.GetUserList(ctx, query)
+	users, err := s.repo.GetUserList(ctx, page, filter)
 	if err != nil {
 		logger.Error("failed to get user list", "error", err)
 		return nil, err
@@ -73,11 +74,6 @@ func (s *userService) UpdateUser(ctx context.Context, user *model.User) (*model.
 }
 
 func (s *userService) DeleteUser(ctx context.Context, userID int64) error {
-	_, err := s.GetUserByID(ctx, userID)
-	if err != nil {
-		return err
-	}
-
 	if err := s.repo.DeleteUser(ctx, userID); err != nil {
 		logger.Error("failed to delete user", "error", err)
 		return err
