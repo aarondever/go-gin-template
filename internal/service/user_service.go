@@ -6,9 +6,9 @@ import (
 	e "github.com/aarondever/go-gin-template/errors"
 	"github.com/aarondever/go-gin-template/internal/model"
 	"github.com/aarondever/go-gin-template/internal/repository"
+	"github.com/aarondever/go-gin-template/internal/util"
 	"github.com/aarondever/go-gin-template/pkg/logger"
 	"github.com/aarondever/go-gin-template/pkg/pagination"
-	"github.com/aarondever/go-gin-template/pkg/utils"
 )
 
 type UserService interface {
@@ -28,7 +28,7 @@ func NewUserService(repo repository.UserRepository) UserService {
 }
 
 func (s *userService) CreateUser(ctx context.Context, user *model.User) (*model.User, error) {
-	if err := utils.ValidateStruct(user); err != nil {
+	if err := util.ValidateStruct(user); err != nil {
 		return nil, &e.ValidationError{Err: err}
 	}
 
@@ -49,7 +49,7 @@ func (s *userService) GetUserByID(ctx context.Context, userID int64) (*model.Use
 }
 
 func (s *userService) GetUserList(ctx context.Context, page *pagination.Pagination, filter *model.UserListFilter) ([]*model.User, error) {
-	if err := utils.ValidateStruct(filter); err != nil {
+	if err := util.ValidateStruct(filter); err != nil {
 		return nil, &e.ValidationError{Err: err}
 	}
 
@@ -62,7 +62,7 @@ func (s *userService) GetUserList(ctx context.Context, page *pagination.Paginati
 }
 
 func (s *userService) UpdateUser(ctx context.Context, user *model.User) (*model.User, error) {
-	if err := utils.ValidateStruct(user, "Name"); err != nil {
+	if err := util.ValidateStruct(user, "Name"); err != nil {
 		return nil, &e.ValidationError{Err: err}
 	}
 

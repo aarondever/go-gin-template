@@ -1,13 +1,12 @@
 package handler
 
 import (
-	"errors"
 	"net/http"
 	"strconv"
 
-	e "github.com/aarondever/go-gin-template/errors"
 	"github.com/aarondever/go-gin-template/internal/model"
 	"github.com/aarondever/go-gin-template/internal/service"
+	"github.com/aarondever/go-gin-template/internal/util"
 	"github.com/aarondever/go-gin-template/pkg/pagination"
 	"github.com/aarondever/go-gin-template/pkg/response"
 	"github.com/gin-gonic/gin"
@@ -65,16 +64,7 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 		Email: req.Email,
 	})
 	if err != nil {
-		var valErr *e.ValidationError
-		if errors.As(err, &valErr) {
-			response.Error(c, http.StatusBadRequest, "validation failed", valErr.Err)
-			return
-		}
-		if errors.Is(err, e.ErrConflict) {
-			response.Error(c, http.StatusConflict, "user already exists", err)
-			return
-		}
-		response.Error(c, http.StatusInternalServerError, "failed to create user", err)
+		util.HandleError(c, err, "failed to create user")
 		return
 	}
 
@@ -90,11 +80,7 @@ func (h *UserHandler) GetUserByID(c *gin.Context) {
 
 	user, err := h.svc.GetUserByID(c.Request.Context(), userID)
 	if err != nil {
-		if errors.Is(err, e.ErrNotFound) {
-			response.Error(c, http.StatusNotFound, "user not found", err)
-			return
-		}
-		response.Error(c, http.StatusInternalServerError, "failed to get user", err)
+		util.HandleError(c, err, "failed to get user")
 		return
 	}
 
@@ -113,12 +99,7 @@ func (h *UserHandler) GetUserList(c *gin.Context) {
 		Email: req.Email,
 	})
 	if err != nil {
-		var valErr *e.ValidationError
-		if errors.As(err, &valErr) {
-			response.Error(c, http.StatusBadRequest, "validation failed", valErr.Err)
-			return
-		}
-		response.Error(c, http.StatusInternalServerError, "failed to list users", err)
+		util.HandleError(c, err, "failed to list users")
 		return
 	}
 
@@ -147,20 +128,7 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 		Email: req.Email,
 	})
 	if err != nil {
-		var valErr *e.ValidationError
-		if errors.As(err, &valErr) {
-			response.Error(c, http.StatusBadRequest, "validation failed", valErr.Err)
-			return
-		}
-		if errors.Is(err, e.ErrNotFound) {
-			response.Error(c, http.StatusNotFound, "user not found", err)
-			return
-		}
-		if errors.Is(err, e.ErrConflict) {
-			response.Error(c, http.StatusConflict, "user already exists", err)
-			return
-		}
-		response.Error(c, http.StatusInternalServerError, "failed to update user", err)
+		util.HandleError(c, err, "failed to update user")
 		return
 	}
 
@@ -175,11 +143,7 @@ func (h *UserHandler) DeleteUser(c *gin.Context) {
 	}
 
 	if err := h.svc.DeleteUser(c.Request.Context(), userID); err != nil {
-		if errors.Is(err, e.ErrNotFound) {
-			response.Error(c, http.StatusNotFound, "user not found", err)
-			return
-		}
-		response.Error(c, http.StatusInternalServerError, "failed to delete user", err)
+		util.HandleError(c, err, "failed to delete user")
 		return
 	}
 
