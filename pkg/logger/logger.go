@@ -60,6 +60,6 @@ func Fatal(msg string, args ...any) {
 	os.Exit(1)
 }
 
-func GetLogger() *slog.Logger {
+func Logger() *slog.Logger {
 	return log
 }

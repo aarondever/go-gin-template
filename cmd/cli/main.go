@@ -78,7 +78,7 @@ func runWithDB(command string, args []string) {
 
 	logger.Init(cfg.Log.Level, cfg.Log.Format)
 
-	db, err := database.New(cfg, logger.GetLogger())
+	db, err := database.New(cfg, logger.Logger())
 	if err != nil {
 		logger.Fatal("Failed to connect to database", "error", err)
 	}

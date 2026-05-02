@@ -11,11 +11,9 @@ import (
 	"time"
 
 	"github.com/aarondever/go-gin-template/config"
-	"github.com/aarondever/go-gin-template/internal/database"
+	a "github.com/aarondever/go-gin-template/internal/app"
 	"github.com/aarondever/go-gin-template/internal/handler"
 	"github.com/aarondever/go-gin-template/internal/middleware"
-	"github.com/aarondever/go-gin-template/internal/repository"
-	"github.com/aarondever/go-gin-template/internal/service"
 	"github.com/aarondever/go-gin-template/pkg/logger"
 	"github.com/gin-gonic/gin"
 )
@@ -27,31 +25,8 @@ func main() {
 		log.Fatalf("Failed to load config: %v", err)
 	}
 
-	// Initialize logger
-	logger.Init(cfg.Log.Level, cfg.Log.Format)
-
-	// Initialize database
-	db, err := database.New(cfg, logger.GetLogger())
-	if err != nil {
-		logger.Fatal("Failed to connect to database", "error", err)
-	}
-	defer db.Close()
-
-	if cfg.Database.RunMigrations {
-		// Run database migrations
-		if err := database.RunMigrations(db.DB()); err != nil {
-			logger.Fatal("Failed to run database migrations", "error", err)
-		}
-	}
-
-	// Initialize repositories
-	userRepo := repository.NewUserRepository(db.DB())
-
-	// Initialize services
-	userService := service.NewUserService(userRepo)
-
-	// Initialize handlers
-	userHandler := handler.NewUserHandler(userService)
+	// Initialize application
+	app := a.New(cfg)
 
 	// Setup router
 	gin.SetMode(cfg.Server.Mode)
@@ -70,7 +45,7 @@ func main() {
 	v1 := r.Group("/api/v1")
 
 	// Register routes
-	userHandler.RegisterRoutes(v1)
+	handler.NewUserHandler(app.UserSvc).RegisterRoutes(v1)
 
 	// Create HTTP server
 	srv := &http.Server{
