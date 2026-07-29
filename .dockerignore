@@ -30,6 +30,9 @@ build/
 .env
 .env.local
 .env.*.local
+.env.example
+.air.toml
+Makefile
 
 # Logs
 *.log

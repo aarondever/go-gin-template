@@ -1,97 +1,54 @@
 package config
 
 import (
+	"fmt"
 	"os"
-	"strconv"
+	"time"
 
+	"github.com/caarlos0/env/v11"
 	"github.com/joho/godotenv"
 )
 
 type Config struct {
-	Server   ServerConfig
-	Database DatabaseConfig
-	Log      LogConfig
+	Server ServerConfig
+	DB     DBConfig
+	Log    LogConfig
 }
 
 type ServerConfig struct {
-	Port         string
-	Mode         string // "debug", "release", "test"
-	ReadTimeout  int
-	WriteTimeout int
+	Port         int           `env:"SERVER_PORT" envDefault:"8080"`
+	Mode         string        `env:"SERVER_MODE" envDefault:"release"` // "debug", "test", "release"
+	ReadTimeout  time.Duration `env:"SERVER_READ_TIMEOUT" envDefault:"30s"`
+	WriteTimeout time.Duration `env:"SERVER_WRITE_TIMEOUT" envDefault:"30s"`
 }
 
-type DatabaseConfig struct {
-	DSN             string
-	MaxOpenConns    int
-	MaxIdleConns    int
-	ConnMaxLifetime int
-	RunMigrations   bool
+type DBConfig struct {
+	Host            string        `env:"DB_HOST,required"`
+	Port            int           `env:"DB_PORT" envDefault:"5432"`
+	User            string        `env:"DB_USER,required"`
+	Password        string        `env:"DB_PASSWORD,required,unset"` // unset clears it from env after read
+	DBName          string        `env:"DB_NAME,required"`
+	SSLMode         string        `env:"DB_SSLMODE" envDefault:"disable"`
+	MaxOpenConns    int           `env:"DB_MAX_OPEN_CONNS" envDefault:"25"`
+	MaxIdleConns    int           `env:"DB_MAX_IDLE_CONNS" envDefault:"5"`
+	ConnMaxLifetime time.Duration `env:"DB_CONN_MAX_LIFETIME" envDefault:"5m"`
 }
 
 type LogConfig struct {
-	Level  string
-	Format string // "json" or "text"
+	Level  string `env:"LOG_LEVEL" envDefault:"info"`
+	Format string `env:"LOG_FORMAT" envDefault:"json"` // "json" or "text"
 }
 
 func Load() (*Config, error) {
-	// Load .env file if it exists
-	_ = godotenv.Load()
-
-	cfg := &Config{
-		Server: ServerConfig{
-			Port:         getStringEnv("SERVER_PORT", "8080"),
-			Mode:         getStringEnv("SERVER_MODE", "release"),
-			ReadTimeout:  getIntEnv("SERVER_READ_TIMEOUT", 30),
-			WriteTimeout: getIntEnv("SERVER_WRITE_TIMEOUT", 30),
-		},
-		Database: DatabaseConfig{
-			DSN:             getStringEnv("DB_DSN", "host=localhost port=5432 user=postgres password=postgres dbname=postgres sslmode=disable"),
-			MaxOpenConns:    getIntEnv("DB_MAX_OPEN_CONNS", 25),
-			MaxIdleConns:    getIntEnv("DB_MAX_IDLE_CONNS", 5),
-			ConnMaxLifetime: getIntEnv("DB_CONN_MAX_LIFETIME", 300),
-			RunMigrations:   getBoolEnv("DB_RUN_MIGRATIONS", true),
-		},
-		Log: LogConfig{
-			Level:  getStringEnv("LOG_LEVEL", "info"),
-			Format: getStringEnv("LOG_FORMAT", "json"),
-		},
+	if err := godotenv.Load(); err != nil {
+		if !os.IsNotExist(err) {
+			return nil, fmt.Errorf("load .env: %w", err)
+		}
 	}
 
-	return cfg, nil
-}
-
-func getStringEnv(key, defaultValue string) string {
-	if value := os.Getenv(key); value != "" {
-		return value
+	var cfg Config
+	if err := env.Parse(&cfg); err != nil {
+		return nil, fmt.Errorf("parse env: %w", err)
 	}
-
-	return defaultValue
-}
-
-func getIntEnv(key string, defaultValue int) int {
-	valueStr := os.Getenv(key)
-	if valueStr == "" {
-		return defaultValue
-	}
-
-	value, err := strconv.Atoi(valueStr)
-	if err != nil {
-		return defaultValue
-	}
-
-	return value
-}
-
-func getBoolEnv(key string, defaultValue bool) bool {
-	valueStr := os.Getenv(key)
-	if valueStr == "" {
-		return defaultValue
-	}
-
-	value, err := strconv.ParseBool(valueStr)
-	if err != nil {
-		return defaultValue
-	}
-
-	return value
+	return &cfg, nil
 }
