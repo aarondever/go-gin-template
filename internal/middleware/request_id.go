@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"github.com/aarondever/go-gin-template/internal/util"
-	"github.com/google/uuid"
 
 	"github.com/gin-gonic/gin"
 )
@@ -14,7 +13,7 @@ func RequestID() gin.HandlerFunc {
 		// Get id from request
 		reqID := c.GetHeader(RequestIDHeader)
 		if reqID == "" {
-			reqID = uuid.New().String()
+			reqID = util.NewID()
 		}
 
 		c.Header(RequestIDHeader, reqID)
