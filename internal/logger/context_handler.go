@@ -4,7 +4,7 @@ import (
 	"context"
 	"log/slog"
 
-	"github.com/aarondever/go-gin-template/pkg/util"
+	"github.com/aarondever/go-gin-template/internal/util"
 )
 
 // ContextAttrFunc derives log attributes from a request context. Register

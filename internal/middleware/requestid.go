@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"github.com/aarondever/go-gin-template/pkg/util"
+	"github.com/aarondever/go-gin-template/internal/util"
 	"github.com/google/uuid"
 
 	"github.com/gin-gonic/gin"

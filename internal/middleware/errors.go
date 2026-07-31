@@ -8,7 +8,7 @@ import (
 
 	e "github.com/aarondever/go-gin-template/internal/apperror"
 
-	"github.com/aarondever/go-gin-template/pkg/logger"
+	"github.com/aarondever/go-gin-template/internal/logger"
 	"github.com/gin-gonic/gin"
 )
 

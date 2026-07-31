@@ -6,9 +6,9 @@ import (
 	"fmt"
 
 	e "github.com/aarondever/go-gin-template/internal/apperror"
+	"github.com/aarondever/go-gin-template/internal/database"
 	"github.com/aarondever/go-gin-template/internal/model"
-	"github.com/aarondever/go-gin-template/pkg/database"
-	p "github.com/aarondever/go-gin-template/pkg/pagination"
+	p "github.com/aarondever/go-gin-template/internal/pagination"
 	"gorm.io/gorm"
 )
 

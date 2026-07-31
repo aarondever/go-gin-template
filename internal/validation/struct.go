@@ -16,9 +16,7 @@ func newValidator() *validator.Validate {
 }
 
 // FieldName reports the name a struct field is given in validation errors: its
-// json tag, then its form tag for query-bound structs, falling back to the Go
-// field name when neither is usable. Returning "" tells validator to use the Go
-// field name.
+// json tag, then its form tag, falling back to the Go field name.
 func FieldName(fld reflect.StructField) string {
 	for _, tag := range []string{"json", "form"} {
 		name, _, _ := strings.Cut(fld.Tag.Get(tag), ",")
@@ -32,18 +30,16 @@ func FieldName(fld reflect.StructField) string {
 	return ""
 }
 
-// UseFieldNames applies [FieldName] to another validator instance. Gin binds
-// requests with its own validator, separate from this package's, so its errors
-// report Go field names until it is registered here too.
+// UseFieldNames applies [FieldName] to another validator instance, such as the
+// one Gin binds requests with.
 func UseFieldNames(engine any) {
 	if v, ok := engine.(*validator.Validate); ok {
 		v.RegisterTagNameFunc(FieldName)
 	}
 }
 
-// ValidateStruct validates s against its validator struct tags. Fields in the
-// optional exclude list are skipped; they are named by their Go field name,
-// not the JSON name reported in errors.
+// ValidateStruct validates s against its validator struct tags. Excluded fields
+// are named by their Go field name, not the JSON name reported in errors.
 func ValidateStruct(s any, fields ...string) error {
 	return validate.StructExcept(s, fields...)
 }

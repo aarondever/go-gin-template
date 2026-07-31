@@ -12,13 +12,13 @@ import (
 	"time"
 
 	"github.com/aarondever/go-gin-template/config"
+	"github.com/aarondever/go-gin-template/internal/database"
 	"github.com/aarondever/go-gin-template/internal/handler"
+	"github.com/aarondever/go-gin-template/internal/logger"
 	"github.com/aarondever/go-gin-template/internal/middleware"
 	"github.com/aarondever/go-gin-template/internal/repository"
 	"github.com/aarondever/go-gin-template/internal/service"
-	"github.com/aarondever/go-gin-template/pkg/database"
-	"github.com/aarondever/go-gin-template/pkg/logger"
-	"github.com/aarondever/go-gin-template/pkg/validation"
+	"github.com/aarondever/go-gin-template/internal/validation"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 )

@@ -1,7 +1,7 @@
 package database
 
 import (
-	"github.com/aarondever/go-gin-template/pkg/pagination"
+	"github.com/aarondever/go-gin-template/internal/pagination"
 	"gorm.io/gorm"
 )
 

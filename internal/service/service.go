@@ -5,10 +5,10 @@ import (
 	"fmt"
 
 	"github.com/aarondever/go-gin-template/internal/model"
+	p "github.com/aarondever/go-gin-template/internal/pagination"
 	"github.com/aarondever/go-gin-template/internal/repository"
-	p "github.com/aarondever/go-gin-template/pkg/pagination"
-	"github.com/aarondever/go-gin-template/pkg/util"
-	"github.com/aarondever/go-gin-template/pkg/validation"
+	"github.com/aarondever/go-gin-template/internal/util"
+	"github.com/aarondever/go-gin-template/internal/validation"
 )
 
 type Service interface {

@@ -5,9 +5,9 @@ import (
 	"strconv"
 
 	"github.com/aarondever/go-gin-template/internal/model"
+	p "github.com/aarondever/go-gin-template/internal/pagination"
+	"github.com/aarondever/go-gin-template/internal/response"
 	"github.com/aarondever/go-gin-template/internal/service"
-	p "github.com/aarondever/go-gin-template/pkg/pagination"
-	"github.com/aarondever/go-gin-template/pkg/response"
 	"github.com/gin-gonic/gin"
 )
 
