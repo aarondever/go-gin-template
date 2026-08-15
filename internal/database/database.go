@@ -1,6 +1,7 @@
 package database
 
 import (
+	"cmp"
 	"fmt"
 	"log/slog"
 	"time"
@@ -24,6 +25,7 @@ type Config struct {
 	MaxOpenConns    int
 	MaxIdleConns    int
 	ConnMaxLifetime time.Duration
+	Logger          *slog.Logger
 }
 
 func (c Config) DSN() string {
@@ -36,7 +38,7 @@ func (c Config) DSN() string {
 func New(cfg Config) (*Database, error) {
 	db, err := gorm.Open(postgres.Open(cfg.DSN()), &gorm.Config{
 		TranslateError: true,
-		Logger: gormLogger.NewSlogLogger(slog.Default(), gormLogger.Config{
+		Logger: gormLogger.NewSlogLogger(cmp.Or(cfg.Logger, slog.Default()), gormLogger.Config{
 			LogLevel: gormLogger.Warn,
 		}),
 	})

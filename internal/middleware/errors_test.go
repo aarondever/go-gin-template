@@ -379,26 +379,6 @@ func TestErrorHandlerLogAttributes(t *testing.T) {
 	}
 }
 
-// The middleware logs with the request context, so an upstream request ID lands
-// on the record.
-func TestErrorHandlerIncludesRequestID(t *testing.T) {
-	rec := captureLogs(t)
-
-	engine := newEngine(RequestID(), ErrorHandler())
-	engine.GET("/resource", failWith(e.New(e.CodeInternal, "boom")))
-
-	req := httptest.NewRequest(http.MethodGet, "/resource", nil)
-	req.Header.Set(RequestIDHeader, "req-7")
-	w := do(engine, req)
-
-	if got := rec.only(t).RequestID; got != "req-7" {
-		t.Errorf("context request ID = %q, want %q", got, "req-7")
-	}
-	if got := w.Header().Get(RequestIDHeader); got != "req-7" {
-		t.Errorf("response header = %q, want %q", got, "req-7")
-	}
-}
-
 // c.Error only records; it does not stop the chain. A handler that wants to bail
 // out has to abort itself, otherwise the handlers after it still run and can
 // commit a response the middleware then refuses to overwrite.

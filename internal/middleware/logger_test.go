@@ -8,7 +8,6 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/aarondever/go-gin-template/internal/util"
 	"github.com/gin-gonic/gin"
 )
 
@@ -49,9 +48,6 @@ func (r *logRecorder) Handle(ctx context.Context, rec slog.Record) error {
 		entry.Attrs[a.Key] = a.Value
 		return true
 	})
-	if id, ok := util.ExtractRequestID(ctx); ok {
-		entry.RequestID = id
-	}
 
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -316,38 +312,6 @@ func TestLoggerSkipDoesNotLeakBetweenRequests(t *testing.T) {
 	}
 	if got := entries[0].str(t, "path"); got != "/users" {
 		t.Errorf("attr path = %q, want %q", got, "/users")
-	}
-}
-
-// The middleware logs with the request context, so a request ID injected
-// upstream is carried into the record.
-func TestLoggerIncludesRequestIDFromContext(t *testing.T) {
-	rec := captureLogs(t)
-
-	engine := newEngine(RequestID(), Logger())
-	engine.GET("/resource", func(c *gin.Context) { c.String(http.StatusOK, "ok") })
-
-	req := httptest.NewRequest(http.MethodGet, "/resource", nil)
-	req.Header.Set(RequestIDHeader, "req-42")
-	do(engine, req)
-
-	if got := rec.only(t).RequestID; got != "req-42" {
-		t.Errorf("context request ID = %q, want %q", got, "req-42")
-	}
-}
-
-// Ordering matters: with Logger first, the ID is not on the context yet when
-// the deferred log runs, because RequestID replaces c.Request further down.
-func TestLoggerWithoutRequestIDMiddleware(t *testing.T) {
-	rec := captureLogs(t)
-
-	engine := newEngine(Logger())
-	engine.GET("/resource", func(c *gin.Context) { c.String(http.StatusOK, "ok") })
-
-	do(engine, httptest.NewRequest(http.MethodGet, "/resource", nil))
-
-	if got := rec.only(t).RequestID; got != "" {
-		t.Errorf("context request ID = %q, want empty", got)
 	}
 }
 

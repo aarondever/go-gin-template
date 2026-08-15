@@ -4,7 +4,7 @@ import (
 	"context"
 	"log/slog"
 
-	"github.com/aarondever/go-gin-template/internal/util"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // ContextAttrFunc derives log attributes from a request context. Register
@@ -40,12 +40,17 @@ func (h *contextHandler) WithGroup(name string) slog.Handler {
 	return newContextHandler(h.Handler.WithGroup(name), h.extractors)
 }
 
-// WithRequestID exposes the request ID on ctx as a log attribute. Wire it into
-// logger.Init so every context-aware log call carries it.
-func WithRequestID(ctx context.Context) []slog.Attr {
-	requestID, ok := util.ExtractRequestID(ctx)
-	if !ok {
-		return nil
+// WithTrace stamps the current span's ids, so a log line and its span join up.
+// The ids are there whether or not the span was sampled.
+func WithTrace() ContextAttrFunc {
+	return func(ctx context.Context) []slog.Attr {
+		sc := trace.SpanContextFromContext(ctx)
+		if !sc.IsValid() {
+			return nil
+		}
+		return []slog.Attr{
+			slog.String("trace_id", sc.TraceID().String()),
+			slog.String("span_id", sc.SpanID().String()),
+		}
 	}
-	return []slog.Attr{slog.String("request_id", requestID)}
 }

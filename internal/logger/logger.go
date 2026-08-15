@@ -6,17 +6,13 @@ import (
 	"os"
 	"strings"
 	"time"
+
+	"github.com/aarondever/go-gin-template/config"
 )
 
-type Config struct {
-	Level  string
-	Format string // "json" or "text"
-}
-
-// Init configures the default slog logger. Any extractors passed here are run
-// for every context-aware log call, letting values carried on the context (a
-// request ID, for example) show up as attributes.
-func Init(cfg Config, extractors ...ContextAttrFunc) {
+// Init configures the default slog logger. Extractors run on every
+// context-aware call, turning context values into attributes.
+func Init(cfg config.LogConfig, extractors ...ContextAttrFunc) {
 	var logLevel slog.Level
 	switch strings.ToLower(cfg.Level) {
 	case "debug":
@@ -48,9 +44,7 @@ func Init(cfg Config, extractors ...ContextAttrFunc) {
 	slog.SetDefault(slog.New(handler))
 }
 
-// humanizeDuration renders duration attributes as "1.523ms" rather than the raw
-// nanosecond count the JSON handler would otherwise emit. Rounding to the
-// microsecond keeps sub-millisecond timings visible without the noise digits.
+// humanizeDuration renders durations as "1.523ms", not a nanosecond count.
 func humanizeDuration(_ []string, a slog.Attr) slog.Attr {
 	if a.Value.Kind() == slog.KindDuration {
 		a.Value = slog.StringValue(a.Value.Duration().Round(time.Microsecond).String())

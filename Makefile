@@ -16,8 +16,8 @@ help: ## Show this help message
 
 # Development targets
 .PHONY: dev
-dev: ## Start development server with hot reload
-	@air
+dev: ## Start development server
+	@go run $(MAIN_PATH)
 
 # Build targets
 .PHONY: build

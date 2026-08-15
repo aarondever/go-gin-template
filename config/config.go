@@ -13,11 +13,12 @@ type Config struct {
 	Server ServerConfig
 	DB     DBConfig
 	Log    LogConfig
+	OTEL   OTELConfig
 }
 
 type ServerConfig struct {
 	Port         int           `env:"SERVER_PORT" envDefault:"8080"`
-	Mode         string        `env:"SERVER_MODE" envDefault:"release"` // "debug", "test", "release"
+	Mode         string        `env:"SERVER_MODE" envDefault:"release"` // "debug", or "release"
 	ReadTimeout  time.Duration `env:"SERVER_READ_TIMEOUT" envDefault:"30s"`
 	WriteTimeout time.Duration `env:"SERVER_WRITE_TIMEOUT" envDefault:"30s"`
 }
@@ -37,6 +38,12 @@ type DBConfig struct {
 type LogConfig struct {
 	Level  string `env:"LOG_LEVEL" envDefault:"info"`
 	Format string `env:"LOG_FORMAT" envDefault:"json"` // "json" or "text"
+}
+
+type OTELConfig struct {
+	Endpoint    string  `env:"OTEL_EXPORTER_OTLP_ENDPOINT"`
+	ServiceName string  `env:"OTEL_SERVICE_NAME" envDefault:"go-gin-service"`
+	SampleRatio float64 `env:"OTEL_TRACES_SAMPLER_ARG" envDefault:"1"`
 }
 
 func Load() (*Config, error) {
