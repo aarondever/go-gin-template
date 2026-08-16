@@ -1,7 +1,6 @@
 package database
 
 import (
-	"cmp"
 	"fmt"
 	"log/slog"
 	"time"
@@ -9,6 +8,7 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	gormLogger "gorm.io/gorm/logger"
+	"gorm.io/plugin/opentelemetry/tracing"
 )
 
 type Database struct {
@@ -25,7 +25,6 @@ type Config struct {
 	MaxOpenConns    int
 	MaxIdleConns    int
 	ConnMaxLifetime time.Duration
-	Logger          *slog.Logger
 }
 
 func (c Config) DSN() string {
@@ -38,8 +37,9 @@ func (c Config) DSN() string {
 func New(cfg Config) (*Database, error) {
 	db, err := gorm.Open(postgres.Open(cfg.DSN()), &gorm.Config{
 		TranslateError: true,
-		Logger: gormLogger.NewSlogLogger(cmp.Or(cfg.Logger, slog.Default()), gormLogger.Config{
-			LogLevel: gormLogger.Warn,
+		Logger: gormLogger.NewSlogLogger(slog.Default(), gormLogger.Config{
+			LogLevel:             gormLogger.Warn,
+			ParameterizedQueries: true,
 		}),
 	})
 	if err != nil {
@@ -60,6 +60,10 @@ func New(cfg Config) (*Database, error) {
 	// Test connection
 	if err := sqlDB.Ping(); err != nil {
 		return nil, fmt.Errorf("ping database: %w", err)
+	}
+
+	if err := db.Use(tracing.NewPlugin(tracing.WithoutQueryVariables())); err != nil {
+		return nil, fmt.Errorf("instrument database: %w", err)
 	}
 
 	return &Database{db: db}, nil

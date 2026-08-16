@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"log/slog"
@@ -22,14 +23,21 @@ import (
 )
 
 func main() {
+	if err := run(); err != nil {
+		log.Fatalln(err)
+	}
+	logger.Info("server exited")
+}
+
+func run() (err error) {
 	// Handle SIGINT (CTRL+C) gracefully.
-	signalCtx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
 	// Load configuration
 	cfg, err := config.Load()
 	if err != nil {
-		log.Fatalf("failed to load config: %v", err)
+		return fmt.Errorf("failed to load config: %w", err)
 	}
 
 	// Initialize logger
@@ -38,14 +46,12 @@ func main() {
 	// Initialize telemetry
 	otelShutdown, err := telemetry.Init(context.Background(), cfg.OTEL)
 	if err != nil {
-		logger.Fatal("failed to initialize telemetry", logger.Err(err))
+		return fmt.Errorf("failed to initialize telemetry: %w", err)
 	}
 	defer func() {
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
-		if err := otelShutdown(ctx); err != nil {
-			logger.Error("failed to shutdown telemetry", logger.Err(err))
-		}
+		err = errors.Join(err, otelShutdown(shutdownCtx))
 	}()
 
 	// Initialize database
@@ -61,9 +67,11 @@ func main() {
 		ConnMaxLifetime: cfg.DB.ConnMaxLifetime,
 	})
 	if err != nil {
-		logger.Fatal("failed to connect to database", logger.Err(err))
+		return fmt.Errorf("failed to connect to database: %w", err)
 	}
-	defer db.Close()
+	defer func() {
+		err = errors.Join(err, db.Close())
+	}()
 
 	// Initialize repository
 	repo := repository.New(db.DB())
@@ -92,16 +100,13 @@ func main() {
 
 	select {
 	case err := <-srvErr:
-		logger.Error("server failed to start", logger.Err(err))
-	case <-signalCtx.Done():
-		logger.Info("shutting down server...")
+		return fmt.Errorf("failed to start server: %w", err)
+	case <-ctx.Done():
+		stop()
 	}
 
+	logger.Info("shutting down server...")
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	if err := srv.Shutdown(shutdownCtx); err != nil {
-		logger.Error("server forced to shutdown", logger.Err(err))
-	}
-
-	logger.Info("server exited")
+	return srv.Shutdown(shutdownCtx)
 }
