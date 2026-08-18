@@ -8,17 +8,19 @@ import (
 	p "github.com/aarondever/go-gin-template/internal/pagination"
 	"github.com/aarondever/go-gin-template/internal/response"
 	"github.com/aarondever/go-gin-template/internal/service"
+	"github.com/aarondever/go-gin-template/internal/util"
+	"github.com/aarondever/go-gin-template/internal/validation"
 	"github.com/gin-gonic/gin"
 )
 
 type createUserRequest struct {
-	Name  string  `json:"name" binding:"required"`
-	Email *string `json:"email" binding:"omitzero,email"`
+	Name  string  `json:"name" validate:"required"`
+	Email *string `json:"email" validate:"omitempty,email"`
 }
 
 type updateUserRequest struct {
 	Name  string  `json:"name"`
-	Email *string `json:"email" binding:"omitzero,email"`
+	Email *string `json:"email" validate:"omitempty,email"`
 }
 
 type getUserListRequest struct {
@@ -40,20 +42,14 @@ func New(svc service.Service) *Handler {
 	return &Handler{svc: svc}
 }
 
-func (h *Handler) RegisterRoutes(router *gin.RouterGroup) {
-	users := router.Group("/users")
-	{
-		users.POST("", h.Create)
-		users.GET("/:userID", h.GetByID)
-		users.GET("", h.GetList)
-		users.PUT("/:userID", h.Update)
-		users.DELETE("/:userID", h.Delete)
-	}
-}
-
 func (h *Handler) Create(c *gin.Context) {
 	var req createUserRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
+		c.Error(err)
+		return
+	}
+
+	if err := validation.ValidateStruct(util.TrimStructStr(req)); err != nil {
 		c.Error(err)
 		return
 	}
@@ -93,6 +89,11 @@ func (h *Handler) GetList(c *gin.Context) {
 		return
 	}
 
+	if err := validation.ValidateStruct(util.TrimStructStr(req)); err != nil {
+		c.Error(err)
+		return
+	}
+
 	users, err := h.svc.GetList(c.Request.Context(), &req.Pagination, &model.UserListFilter{
 		Name:  req.Name,
 		Email: req.Email,
@@ -117,6 +118,11 @@ func (h *Handler) Update(c *gin.Context) {
 
 	var req updateUserRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
+		c.Error(err)
+		return
+	}
+
+	if err := validation.ValidateStruct(util.TrimStructStr(req)); err != nil {
 		c.Error(err)
 		return
 	}

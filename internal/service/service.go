@@ -7,8 +7,6 @@ import (
 	"github.com/aarondever/go-gin-template/internal/model"
 	p "github.com/aarondever/go-gin-template/internal/pagination"
 	"github.com/aarondever/go-gin-template/internal/repository"
-	"github.com/aarondever/go-gin-template/internal/util"
-	"github.com/aarondever/go-gin-template/internal/validation"
 )
 
 type Service interface {
@@ -28,9 +26,6 @@ func New(repo repository.Repository) Service {
 }
 
 func (s *service) Create(ctx context.Context, user *model.User) (*model.User, error) {
-	if err := validation.ValidateStruct(util.TrimStructStr(user)); err != nil {
-		return nil, err
-	}
 	if err := s.repo.Create(ctx, user); err != nil {
 		return nil, fmt.Errorf("service.Create: %w", err)
 	}
@@ -50,9 +45,6 @@ func (s *service) GetList(
 	page *p.Pagination,
 	filter *model.UserListFilter,
 ) ([]*model.User, error) {
-	if err := validation.ValidateStruct(util.TrimStructStr(filter)); err != nil {
-		return nil, err
-	}
 	users, err := s.repo.GetList(ctx, page, filter)
 	if err != nil {
 		return nil, fmt.Errorf("service.GetList: %w", err)
@@ -61,9 +53,6 @@ func (s *service) GetList(
 }
 
 func (s *service) Update(ctx context.Context, user *model.User) (*model.User, error) {
-	if err := validation.ValidateStruct(util.TrimStructStr(user), "Name"); err != nil {
-		return nil, err
-	}
 	if err := s.repo.Update(ctx, user); err != nil {
 		return nil, fmt.Errorf("service.Update: %w", err)
 	}

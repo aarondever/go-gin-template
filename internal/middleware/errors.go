@@ -65,14 +65,9 @@ func ErrorHandler() gin.HandlerFunc {
 			logger.WarnContext(c.Request.Context(), "request failed", attrs...)
 		}
 
-		// Client disconnected — nothing to write.
-		if errors.Is(err, context.Canceled) {
-			c.Abort()
-			return
-		}
-
-		// A handler already committed a response; don't write twice.
-		if c.Writer.Written() {
+		// Nothing left to write: the client went away, or a response is committed
+		// and a second write would corrupt it.
+		if errors.Is(err, context.Canceled) || c.Writer.Written() {
 			return
 		}
 
