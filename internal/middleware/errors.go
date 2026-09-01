@@ -9,6 +9,7 @@ import (
 	e "github.com/aarondever/go-gin-template/internal/apperror"
 
 	"github.com/aarondever/go-gin-template/internal/logger"
+	"github.com/aarondever/go-gin-template/internal/util"
 	"github.com/gin-gonic/gin"
 )
 
@@ -25,7 +26,8 @@ var statusByCode = map[e.Code]int{
 }
 
 type errorResponse struct {
-	Error errorBody `json:"error"`
+	Error   errorBody `json:"error"`
+	TraceID string    `json:"trace_id,omitempty"`
 }
 
 type errorBody struct {
@@ -71,11 +73,14 @@ func ErrorHandler() gin.HandlerFunc {
 			return
 		}
 
-		body := errorResponse{Error: errorBody{
-			Code:    appErr.Code,
-			Message: appErr.Message,
-			Details: appErr.Details,
-		}}
+		body := errorResponse{
+			Error: errorBody{
+				Code:    appErr.Code,
+				Message: appErr.Message,
+				Details: appErr.Details,
+			},
+			TraceID: util.TraceID(c.Request.Context()),
+		}
 
 		c.AbortWithStatusJSON(status, body)
 	}

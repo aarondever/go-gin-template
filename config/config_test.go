@@ -68,7 +68,8 @@ func TestLoadDefaults(t *testing.T) {
 			MaxIdleConns:    5,
 			ConnMaxLifetime: 5 * time.Minute,
 		},
-		Log: LogConfig{Level: "info", Format: "json"},
+		Log:  LogConfig{Level: "info", Format: "json"},
+		OTEL: OTELConfig{ServiceName: "go-gin-service", SampleRatio: 1},
 	}
 	if *cfg != want {
 		t.Errorf("Load() = %+v, want %+v", *cfg, want)
@@ -115,7 +116,8 @@ func TestLoadFromEnv(t *testing.T) {
 			MaxIdleConns:    10,
 			ConnMaxLifetime: 90 * time.Second,
 		},
-		Log: LogConfig{Level: "debug", Format: "text"},
+		Log:  LogConfig{Level: "debug", Format: "text"},
+		OTEL: OTELConfig{ServiceName: "go-gin-service", SampleRatio: 1},
 	}
 	if *cfg != want {
 		t.Errorf("Load() = %+v, want %+v", *cfg, want)

@@ -112,6 +112,7 @@ func TestErrorHandlerResponseShape(t *testing.T) {
 	if err := json.Unmarshal(w.Body.Bytes(), &raw); err != nil {
 		t.Fatalf("decode body %q: %v", w.Body.String(), err)
 	}
+	// No span in the test request, so trace_id is empty and omitted.
 	if len(raw) != 1 {
 		t.Errorf("body has keys %v, want only \"error\"", raw)
 	}
