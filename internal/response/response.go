@@ -5,7 +5,7 @@ import (
 )
 
 type response struct {
-	Data any `json:"data,omitempty"`
+	Data any `json:"data"`
 }
 
 func JSON(c *gin.Context, code int, data any) {

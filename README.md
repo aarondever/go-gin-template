@@ -7,7 +7,7 @@ delete or rename.
 
 ## Quick Start
 
-Requires Go 1.25+ and a reachable PostgreSQL.
+Requires Go 1.27+ and a reachable PostgreSQL.
 
 ```bash
 git clone https://github.com/aarondever/go-gin-template.git
@@ -54,16 +54,15 @@ docker run --rm -p 8080:8080 --env-file .env go-gin-template
 
 ## Tech Stack
 
-| Concern | Choice |
-| --- | --- |
-| Language | Go 1.25 |
-| HTTP | [gin-gonic/gin](https://github.com/gin-gonic/gin) |
-| ORM / DB | [gorm](https://gorm.io) + `gorm.io/driver/postgres` (pgx) |
-| Config | [caarlos0/env](https://github.com/caarlos0/env) + [joho/godotenv](https://github.com/joho/godotenv) |
-| Validation | [go-playground/validator/v10](https://github.com/go-playground/validator) |
-| Logging | stdlib `log/slog` (JSON or text) |
-| Tracing | OpenTelemetry SDK, OTLP/HTTP exporter, `otelgin` + GORM tracing plugin |
-| IDs | [google/uuid](https://github.com/google/uuid) (UUIDv7, time-ordered) |
+| Concern    | Choice                                                                                              |
+| ---------- | --------------------------------------------------------------------------------------------------- |
+| Language   | Go 1.27                                                                                             |
+| HTTP       | [gin-gonic/gin](https://github.com/gin-gonic/gin)                                                   |
+| ORM / DB   | [gorm](https://gorm.io) + `gorm.io/driver/postgres` (pgx)                                           |
+| Config     | [caarlos0/env](https://github.com/caarlos0/env) + [joho/godotenv](https://github.com/joho/godotenv) |
+| Validation | [go-playground/validator/v10](https://github.com/go-playground/validator)                           |
+| Logging    | stdlib `log/slog` (JSON or text)                                                                    |
+| Tracing    | OpenTelemetry SDK, OTLP/HTTP exporter, `otelgin` + GORM tracing plugin                              |
 
 ## Architecture
 
@@ -113,26 +112,26 @@ missing `.env` is fine — real environment variables win in deployment). Parsed
 once in [config/config.go](config/config.go); `required` variables fail the boot
 rather than defaulting to something wrong.
 
-| Variable | Default | Notes |
-| --- | --- | --- |
-| `SERVER_PORT` | `8080` | |
-| `SERVER_MODE` | `release` | `debug` or `release`; sets Gin's mode |
-| `SERVER_READ_TIMEOUT` | `30s` | |
-| `SERVER_WRITE_TIMEOUT` | `30s` | |
-| `DB_HOST` | — | **required** |
-| `DB_PORT` | `5432` | |
-| `DB_USER` | — | **required** |
-| `DB_PASSWORD` | — | **required**; unset from the environment after reading |
-| `DB_NAME` | — | **required** |
-| `DB_SSLMODE` | `disable` | use `require` or stricter in production |
-| `DB_MAX_OPEN_CONNS` | `25` | |
-| `DB_MAX_IDLE_CONNS` | `5` | |
-| `DB_CONN_MAX_LIFETIME` | `5m` | |
-| `LOG_LEVEL` | `info` | `debug`, `info`, `warn`, `error` |
-| `LOG_FORMAT` | `json` | `json` or `text` (`text` is nicer locally) |
-| `OTEL_EXPORTER_OTLP_ENDPOINT` | *(empty)* | empty = trace IDs generated, nothing exported |
-| `OTEL_SERVICE_NAME` | `go-gin-service` | shown as the service in your tracing backend |
-| `OTEL_TRACES_SAMPLER_ARG` | `1` | ratio 0–1, parent-based |
+| Variable                      | Default          | Notes                                                  |
+| ----------------------------- | ---------------- | ------------------------------------------------------ |
+| `SERVER_PORT`                 | `8080`           |                                                        |
+| `SERVER_MODE`                 | `release`        | `debug` or `release`; sets Gin's mode                  |
+| `SERVER_READ_TIMEOUT`         | `30s`            |                                                        |
+| `SERVER_WRITE_TIMEOUT`        | `30s`            |                                                        |
+| `DB_HOST`                     | —                | **required**                                           |
+| `DB_PORT`                     | `5432`           |                                                        |
+| `DB_USER`                     | —                | **required**                                           |
+| `DB_PASSWORD`                 | —                | **required**; unset from the environment after reading |
+| `DB_NAME`                     | —                | **required**                                           |
+| `DB_SSLMODE`                  | `disable`        | use `require` or stricter in production                |
+| `DB_MAX_OPEN_CONNS`           | `25`             |                                                        |
+| `DB_MAX_IDLE_CONNS`           | `5`              |                                                        |
+| `DB_CONN_MAX_LIFETIME`        | `5m`             |                                                        |
+| `LOG_LEVEL`                   | `info`           | `debug`, `info`, `warn`, `error`                       |
+| `LOG_FORMAT`                  | `json`           | `json` or `text` (`text` is nicer locally)             |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | _(empty)_        | empty = trace IDs generated, nothing exported          |
+| `OTEL_SERVICE_NAME`           | `go-gin-service` | shown as the service in your tracing backend           |
+| `OTEL_TRACES_SAMPLER_ARG`     | `1`              | ratio 0–1, parent-based                                |
 
 ## Documentation
 
