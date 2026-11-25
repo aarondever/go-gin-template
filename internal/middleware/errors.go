@@ -8,7 +8,6 @@ import (
 
 	e "github.com/aarondever/go-gin-template/internal/apperror"
 
-	"github.com/aarondever/go-gin-template/internal/logger"
 	"github.com/aarondever/go-gin-template/internal/util"
 	"github.com/gin-gonic/gin"
 )
@@ -58,14 +57,14 @@ func ErrorHandler() gin.HandlerFunc {
 			slog.Int("status", status),
 			slog.String("method", c.Request.Method),
 			slog.String("path", c.Request.URL.Path),
-			slog.String("query", c.Request.URL.Path),
+			slog.String("query", c.Request.URL.RawQuery),
 			slog.String("error", appErr.Error()),
 		}
+		level := slog.LevelWarn
 		if status >= 500 {
-			logger.ErrorContext(c.Request.Context(), "request failed", attrs...)
-		} else {
-			logger.WarnContext(c.Request.Context(), "request failed", attrs...)
+			level = slog.LevelError
 		}
+		slog.LogAttrs(c.Request.Context(), level, "request failed", attrs...)
 
 		// Nothing left to write: the client went away, or a response is committed
 		// and a second write would corrupt it.

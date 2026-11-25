@@ -26,7 +26,7 @@ func main() {
 	if err := run(); err != nil {
 		log.Fatalln(err)
 	}
-	logger.Info("server exited")
+	slog.LogAttrs(context.Background(), slog.LevelInfo, "server exited")
 }
 
 func run() (err error) {
@@ -94,7 +94,7 @@ func run() (err error) {
 	}
 	srvErr := make(chan error, 1)
 	go func() {
-		logger.Info("starting server", slog.Int("port", cfg.Server.Port), slog.String("mode", cfg.Server.Mode))
+		slog.LogAttrs(ctx, slog.LevelInfo, "starting server", slog.Int("port", cfg.Server.Port), slog.String("mode", cfg.Server.Mode))
 		srvErr <- srv.ListenAndServe()
 	}()
 
@@ -105,7 +105,7 @@ func run() (err error) {
 		stop()
 	}
 
-	logger.Info("shutting down server...")
+	slog.LogAttrs(ctx, slog.LevelInfo, "shutting down server...")
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	return srv.Shutdown(shutdownCtx)

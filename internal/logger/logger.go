@@ -1,7 +1,6 @@
 package logger
 
 import (
-	"context"
 	"log/slog"
 	"os"
 	"strings"
@@ -27,6 +26,7 @@ func Init(cfg config.LogConfig, extractors ...ContextAttrFunc) {
 
 	opts := &slog.HandlerOptions{
 		Level:       logLevel,
+		AddSource:   true,
 		ReplaceAttr: humanizeDuration,
 	}
 
@@ -50,75 +50,4 @@ func humanizeDuration(_ []string, a slog.Attr) slog.Attr {
 		a.Value = slog.StringValue(a.Value.Duration().Round(time.Microsecond).String())
 	}
 	return a
-}
-
-// Debug logs msg at [slog.LevelDebug].
-func Debug(msg string, attrs ...slog.Attr) {
-	slog.LogAttrs(context.Background(), slog.LevelDebug, msg, attrs...)
-}
-
-// DebugContext logs msg at [slog.LevelDebug], using ctx.
-func DebugContext(ctx context.Context, msg string, attrs ...slog.Attr) {
-	slog.LogAttrs(ctx, slog.LevelDebug, msg, attrs...)
-}
-
-// Info logs msg at [slog.LevelInfo].
-func Info(msg string, attrs ...slog.Attr) {
-	slog.LogAttrs(context.Background(), slog.LevelInfo, msg, attrs...)
-}
-
-// InfoContext logs msg at [slog.LevelInfo], using ctx.
-func InfoContext(ctx context.Context, msg string, attrs ...slog.Attr) {
-	slog.LogAttrs(ctx, slog.LevelInfo, msg, attrs...)
-}
-
-// Warn logs msg at [slog.LevelWarn].
-func Warn(msg string, attrs ...slog.Attr) {
-	slog.LogAttrs(context.Background(), slog.LevelWarn, msg, attrs...)
-}
-
-// WarnContext logs msg at [slog.LevelWarn], using ctx.
-func WarnContext(ctx context.Context, msg string, attrs ...slog.Attr) {
-	slog.LogAttrs(ctx, slog.LevelWarn, msg, attrs...)
-}
-
-// Error logs msg at [slog.LevelError].
-func Error(msg string, attrs ...slog.Attr) {
-	slog.LogAttrs(context.Background(), slog.LevelError, msg, attrs...)
-}
-
-// ErrorContext logs msg at [slog.LevelError], using ctx.
-func ErrorContext(ctx context.Context, msg string, attrs ...slog.Attr) {
-	slog.LogAttrs(ctx, slog.LevelError, msg, attrs...)
-}
-
-// Panic logs msg at [slog.LevelError] and then calls [panic](msg).
-func Panic(msg string, attrs ...slog.Attr) {
-	slog.LogAttrs(context.Background(), slog.LevelError, msg, attrs...)
-	panic(msg)
-}
-
-// PanicContext logs msg at [slog.LevelError], using ctx, and then calls [panic](msg).
-func PanicContext(ctx context.Context, msg string, attrs ...slog.Attr) {
-	slog.LogAttrs(ctx, slog.LevelError, msg, attrs...)
-	panic(msg)
-}
-
-// Fatal logs msg at [slog.LevelError] and then calls [os.Exit](1).
-func Fatal(msg string, attrs ...slog.Attr) {
-	slog.LogAttrs(context.Background(), slog.LevelError, msg, attrs...)
-	os.Exit(1)
-}
-
-// FatalContext logs msg at [slog.LevelError], using ctx, and then calls [os.Exit](1).
-func FatalContext(ctx context.Context, msg string, attrs ...slog.Attr) {
-	slog.LogAttrs(ctx, slog.LevelError, msg, attrs...)
-	os.Exit(1)
-}
-
-func Err(err error) slog.Attr {
-	if err == nil {
-		return slog.Attr{}
-	}
-	return slog.String("error", err.Error())
 }

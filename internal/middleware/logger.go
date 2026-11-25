@@ -4,7 +4,6 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/aarondever/go-gin-template/internal/logger"
 	"github.com/gin-gonic/gin"
 )
 
@@ -28,7 +27,7 @@ func Logger(skipPaths ...string) gin.HandlerFunc {
 
 		c.Next()
 
-		logger.InfoContext(c.Request.Context(), "HTTP Request",
+		slog.LogAttrs(c.Request.Context(), slog.LevelInfo, "HTTP Request",
 			slog.Int("status", c.Writer.Status()),
 			slog.String("method", c.Request.Method),
 			slog.String("path", path),
