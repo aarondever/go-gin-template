@@ -372,11 +372,8 @@ func TestErrorHandlerLogAttributes(t *testing.T) {
 		t.Errorf("attr error = %q, want %q", got, "user not found")
 	}
 
-	// BUG: errors.go passes c.Request.URL.Path for the "query" attribute, so
-	// the query string is never logged. Pinned here so the behaviour change is
-	// deliberate; the fix is to use c.Request.URL.RawQuery.
-	if got := entry.str(t, "query"); got != "/users/42" {
-		t.Errorf("attr query = %q, want the currently duplicated path %q", got, "/users/42")
+	if got := entry.str(t, "query"); got != "verbose=1" {
+		t.Errorf("attr query = %q, want %q", got, "verbose=1")
 	}
 }
 
