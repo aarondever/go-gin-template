@@ -26,7 +26,7 @@ func main() {
 	if err := run(); err != nil {
 		log.Fatalln(err)
 	}
-	slog.LogAttrs(context.Background(), slog.LevelInfo, "server exited")
+	slog.Info("server exited")
 }
 
 func run() (err error) {

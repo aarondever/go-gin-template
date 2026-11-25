@@ -8,6 +8,7 @@ import (
 
 	e "github.com/aarondever/go-gin-template/internal/apperror"
 
+	"github.com/aarondever/go-gin-template/internal/logger"
 	"github.com/aarondever/go-gin-template/internal/util"
 	"github.com/gin-gonic/gin"
 )
@@ -58,7 +59,7 @@ func ErrorHandler() gin.HandlerFunc {
 			slog.String("method", c.Request.Method),
 			slog.String("path", c.Request.URL.Path),
 			slog.String("query", c.Request.URL.RawQuery),
-			slog.String("error", appErr.Error()),
+			logger.Err(appErr),
 		}
 		level := slog.LevelWarn
 		if status >= 500 {

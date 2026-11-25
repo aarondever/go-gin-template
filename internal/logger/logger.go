@@ -9,8 +9,7 @@ import (
 	"github.com/aarondever/go-gin-template/config"
 )
 
-// Init configures the default slog logger. Extractors run on every
-// context-aware call, turning context values into attributes.
+// Init configures the default slog logger, running extractors on every context-aware call.
 func Init(cfg config.LogConfig, extractors ...ContextAttrFunc) {
 	var logLevel slog.Level
 	switch strings.ToLower(cfg.Level) {
@@ -50,4 +49,12 @@ func humanizeDuration(_ []string, a slog.Attr) slog.Attr {
 		a.Value = slog.StringValue(a.Value.Duration().Round(time.Microsecond).String())
 	}
 	return a
+}
+
+// Err is the "error" attr, empty for a nil err so the handler drops it.
+func Err(err error) slog.Attr {
+	if err == nil {
+		return slog.Attr{}
+	}
+	return slog.String("error", err.Error())
 }

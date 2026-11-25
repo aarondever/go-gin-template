@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"github.com/aarondever/go-gin-template/config"
+	"github.com/aarondever/go-gin-template/internal/logger"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 	"go.opentelemetry.io/otel/propagation"
@@ -43,7 +44,7 @@ func Init(ctx context.Context, cfg config.OTELConfig) (func(context.Context) err
 		// Export failures are asynchronous, so without this a collector refusing
 		// spans looks like one receiving them.
 		otel.SetErrorHandler(otel.ErrorHandlerFunc(func(err error) {
-			slog.LogAttrs(context.Background(), slog.LevelError, "telemetry", slog.Any("error", err))
+			slog.LogAttrs(context.Background(), slog.LevelError, "telemetry", logger.Err(err))
 		}))
 
 		// No dial here, so a collector that is down delays spans, not the boot.
